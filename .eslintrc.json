@@ -1,3 +1,23 @@
 {
-  "extends": ["next/core-web-vitals", "next/typescript"]
+  "extends": ["next/core-web-vitals", "next/typescript"],
+  "rules": {
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }
+    ],
+    "no-console": ["warn", { "allow": ["warn", "error"] }]
+  },
+  "overrides": [
+    {
+      // Node 에서 직접 실행하는 CommonJS 스크립트·설정 파일
+      "files": ["scripts/**/*.js", "*.config.js", ".lintstagedrc.js"],
+      "rules": {
+        "@typescript-eslint/no-require-imports": "off",
+        "no-console": "off"
+      }
+    }
+  ]
 }

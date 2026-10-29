@@ -1,101 +1,145 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { endOfWeek, startOfWeek } from 'date-fns';
+import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
+import { useRangeRecords } from '@/hooks/useMonthlyRecords';
+import { useRangeTodos } from '@/hooks/useTodos';
+import { deleteRecord } from '@/lib/records';
+import { HomeView } from '@/components/home/HomeView';
+import DailyOracleBanner from '@/components/dashboard/DailyOracleBanner';
+import ProfileSetupModal from '@/components/dashboard/ProfileSetupModal';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { useToast } from '@/components/ui/Toast';
+import type { DatabaseRecord } from '@/types/database.types';
+import { toISODate } from '@/lib/utils';
+
+function HomeSkeleton() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+    <div
+      className="mx-auto max-w-2xl animate-pulse space-y-4 px-4 py-6"
+      role="status"
+    >
+      <span className="sr-only">사용자 세션 확인 중...</span>
+      <div className="h-8 w-40 rounded-lg bg-slate-200/70" />
+      <div className="h-20 rounded-2xl bg-slate-200/70" />
+      <div className="h-40 rounded-2xl bg-slate-200/70" />
     </div>
+  );
+}
+
+function Home({ userId }: { userId: string }) {
+  const router = useRouter();
+  const toast = useToast();
+
+  const { profile, updateLocal } = useUserProfile(userId);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const closeProfile = useCallback(() => setProfileOpen(false), []);
+
+  const [range, setRange] = useState(() => ({
+    start: toISODate(startOfWeek(new Date())),
+    end: toISODate(endOfWeek(new Date())),
+  }));
+  const onRangeChange = useCallback(
+    (start: string, end: string) =>
+      setRange((r) =>
+        r.start === start && r.end === end ? r : { start, end },
+      ),
+    [],
+  );
+
+  const { records, isLoading, error, removeLocal } = useRangeRecords(
+    userId,
+    range.start,
+    range.end,
+  );
+  const {
+    todos,
+    error: todoError,
+    addTodo,
+    toggleTodo,
+    removeTodo,
+  } = useRangeTodos(userId, range.start, range.end);
+  const todoActions = useMemo(
+    () => ({ addTodo, toggleTodo, removeTodo }),
+    [addTodo, toggleTodo, removeTodo],
+  );
+
+  const handleDelete = useCallback(
+    async (record: DatabaseRecord) => {
+      const err = await deleteRecord(record);
+      if (err) {
+        toast(`삭제 실패: ${err}`, 'error');
+        return;
+      }
+      // Realtime DELETE 이벤트가 도착하면 이미 제거된 상태라 멱등. 연결이 끊긴 경우를 위한 보정.
+      removeLocal(record.id);
+      toast('삭제했어요.');
+    },
+    [removeLocal, toast],
+  );
+
+  const signOut = async () => {
+    await createClient().auth.signOut();
+    router.replace('/login');
+  };
+
+  return (
+    <>
+      <HomeView
+        banner={
+          <DailyOracleBanner
+            profile={profile}
+            onOpenProfileSetup={() => setProfileOpen(true)}
+          />
+        }
+        records={records}
+        todos={todos}
+        isLoading={isLoading}
+        error={error ?? todoError}
+        onRangeChange={onRangeChange}
+        todoActions={todoActions}
+        onDeleteRecord={handleDelete}
+        onSignOut={signOut}
+      />
+      <ProfileSetupModal
+        isOpen={profileOpen}
+        onClose={closeProfile}
+        userId={userId}
+        initialProfile={profile}
+        onProfileUpdated={updateLocal}
+      />
+    </>
+  );
+}
+
+export default function DashboardPage() {
+  const router = useRouter();
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) {
+      router.replace('/login');
+      return;
+    }
+    let cancelled = false;
+    createClient()
+      .auth.getUser()
+      .then(({ data: { user } }) => {
+        if (cancelled) return;
+        if (!user) router.replace('/login');
+        else setUserId(user.id);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
+
+  if (!userId) return <HomeSkeleton />;
+  return (
+    <Suspense fallback={<HomeSkeleton />}>
+      <Home userId={userId} />
+    </Suspense>
   );
 }
