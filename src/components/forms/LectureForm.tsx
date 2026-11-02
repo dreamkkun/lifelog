@@ -3,16 +3,19 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertCircle, Camera, CheckCircle2, FileText, Loader2, UploadCloud, X } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
+import { removeImages, saveRecord } from '@/lib/records';
+import { ExistingImages } from '@/components/ui/ExistingImages';
 import { useLectureMediaPipeline } from '@/hooks/useLectureMediaPipeline';
 import { useToast } from '@/components/ui/Toast';
 import { cn, todayISO, validateImage } from '@/lib/utils';
-import type { LectureRecordInsert } from '@/types/lecture';
+import type { DatabaseRecord } from '@/types/database.types';
 
 interface LectureFormProps {
   userId: string;
   defaultDate?: string;
   onSuccess?: () => void;
+  /** 있으면 새 기록이 아니라 이 기록을 수정한다 */
+  initialRecord?: DatabaseRecord;
 }
 
 const fieldClass = (invalid: boolean) =>
@@ -21,15 +24,17 @@ const fieldClass = (invalid: boolean) =>
     invalid ? 'border-rose-500 focus:ring-rose-200' : 'border-slate-200 focus:ring-amber-500',
   );
 
-export default function LectureForm({ userId, defaultDate, onSuccess }: LectureFormProps) {
+export default function LectureForm({ userId, defaultDate, onSuccess, initialRecord }: LectureFormProps) {
+  const isEdit = !!initialRecord;
   const router = useRouter();
   const toast = useToast();
   const fileInputId = useId();
 
-  const [targetDate, setTargetDate] = useState(defaultDate || todayISO());
-  const [lectureTitle, setLectureTitle] = useState('');
-  const [speaker, setSpeaker] = useState('');
-  const [content, setContent] = useState('');
+  const [targetDate, setTargetDate] = useState(initialRecord?.target_date ?? (defaultDate || todayISO()));
+  const [lectureTitle, setLectureTitle] = useState(initialRecord?.lecture_title ?? '');
+  const [speaker, setSpeaker] = useState(initialRecord?.speaker ?? '');
+  const [content, setContent] = useState(initialRecord?.content ?? '');
+  const [keptImages, setKeptImages] = useState<string[]>(initialRecord?.image_urls ?? []); // 수정 시 남겨 둔 기존 이미지
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -100,24 +105,28 @@ export default function LectureForm({ userId, defaultDate, onSuccess }: LectureF
     }
 
     setIsSubmitting(true);
-    const payload: LectureRecordInsert = {
-      user_id: userId,
-      type: 'LECTURE',
-      target_date: targetDate,
-      lecture_title: lectureTitle.trim(),
-      speaker: speaker.trim() || undefined,
-      content: content.trim(),
-      image_urls: uploadedImagePath ? [uploadedImagePath] : [],
-      ocr_extracted_text: extractedText || undefined,
-    };
-    const { error } = await createClient().from('records').insert(payload);
+    const error = await saveRecord(
+      {
+        user_id: userId,
+        type: 'LECTURE',
+        target_date: targetDate,
+        lecture_title: lectureTitle.trim(),
+        speaker: speaker.trim() || null,
+        content: content.trim(),
+        image_urls: [...keptImages, ...(uploadedImagePath ? [uploadedImagePath] : [])],
+        // 새로 추출한 글자가 없으면 기존에 보관한 원본 OCR 텍스트를 그대로 둔다
+        ocr_extracted_text: extractedText || initialRecord?.ocr_extracted_text || null,
+      },
+      initialRecord?.id,
+    );
 
     if (error) {
-      toast(`저장 실패: ${error.message}`, 'error');
-      setIsSubmitting(false); // 실패 시에만 재시도 허용 (성공 시 이동 중 중복 INSERT 차단)
+      toast(`${isEdit ? '수정' : '저장'} 실패: ${error}`, 'error');
+      setIsSubmitting(false); // 실패 시에만 재시도 허용 (성공 시 이동 중 중복 저장 차단)
       return;
     }
-    toast('강의 노트를 저장했어요.');
+    if (initialRecord) await removeImages(initialRecord.image_urls.filter((p) => !keptImages.includes(p)));
+    toast(isEdit ? '강의 노트를 수정했어요.' : '강의 노트를 저장했어요.');
     if (onSuccess) onSuccess();
     else {
       router.push('/');
@@ -178,6 +187,7 @@ export default function LectureForm({ userId, defaultDate, onSuccess }: LectureF
 
       <div className="space-y-2">
         <span className="block text-xs font-semibold text-slate-500">슬라이드 / 필기 사진</span>
+        <ExistingImages paths={keptImages} onRemove={(p) => setKeptImages(keptImages.filter((x) => x !== p))} />
         <div
           onDragOver={(e) => {
             e.preventDefault();
@@ -326,7 +336,7 @@ export default function LectureForm({ userId, defaultDate, onSuccess }: LectureF
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> 동기화 저장 중...
           </>
         ) : (
-          '강의 노트 저장'
+          isEdit ? '수정 저장' : '강의 노트 저장'
         )}
       </button>
     </form>

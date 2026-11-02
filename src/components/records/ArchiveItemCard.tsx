@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { Pin, Trash2 } from 'lucide-react';
+import Link from 'next/link';
+import { Pencil, Pin, Trash2 } from 'lucide-react';
 import type { DatabaseRecord } from '@/types/database.types';
 import { useSignedUrls } from '@/hooks/useStorageUpload';
 import { Modal } from '@/components/ui/Modal';
@@ -41,11 +42,18 @@ export function ArchiveItemCard({ item, onDelete }: { item: DatabaseRecord; onDe
               <Pin className="h-3.5 w-3.5 fill-current" aria-hidden /> 고정됨
             </span>
           )}
+          <Link
+            href={`/edit/${item.id}`}
+            aria-label="기록 수정"
+            className="ml-auto rounded p-1 text-slate-300 transition-colors hover:bg-slate-100 hover:text-slate-700"
+          >
+            <Pencil className="h-4 w-4" />
+          </Link>
           <button
             type="button"
             aria-label="기록 영구 삭제"
             onClick={() => window.confirm('이 기록을 영구 삭제하시겠습니까?') && onDelete(item)}
-            className="ml-auto rounded p-1 text-slate-300 transition-colors hover:bg-rose-50 hover:text-rose-600"
+            className="rounded p-1 text-slate-300 transition-colors hover:bg-rose-50 hover:text-rose-600"
           >
             <Trash2 className="h-4 w-4" />
           </button>

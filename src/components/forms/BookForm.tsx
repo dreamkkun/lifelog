@@ -3,14 +3,17 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, Quote } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
+import { saveRecord } from '@/lib/records';
 import { useToast } from '@/components/ui/Toast';
 import { cn, todayISO } from '@/lib/utils';
+import type { DatabaseRecord } from '@/types/database.types';
 
 interface BookFormProps {
   userId: string;
   defaultDate?: string;
   onSuccess?: () => void;
+  /** 있으면 새 기록이 아니라 이 기록을 수정한다 */
+  initialRecord?: DatabaseRecord;
 }
 
 const fieldClass = (invalid: boolean) =>
@@ -19,16 +22,18 @@ const fieldClass = (invalid: boolean) =>
     invalid ? 'border-rose-500 focus:ring-rose-200' : 'border-slate-200 focus:ring-indigo-500',
   );
 
-export default function BookForm({ userId, defaultDate, onSuccess }: BookFormProps) {
+export default function BookForm({ userId, defaultDate, onSuccess, initialRecord }: BookFormProps) {
+  const isEdit = !!initialRecord;
   const router = useRouter();
   const toast = useToast();
 
-  const [targetDate, setTargetDate] = useState(defaultDate || todayISO());
-  const [bookTitle, setBookTitle] = useState('');
-  const [bookAuthor, setBookAuthor] = useState('');
-  const [quote, setQuote] = useState('');
-  const [pageNumber, setPageNumber] = useState<number | ''>('');
-  const [content, setContent] = useState('');
+  const [targetDate, setTargetDate] = useState(initialRecord?.target_date ?? (defaultDate || todayISO()));
+  const [bookTitle, setBookTitle] = useState(initialRecord?.book_title ?? '');
+  const [bookAuthor, setBookAuthor] = useState(initialRecord?.book_author ?? '');
+  const [quote, setQuote] = useState(initialRecord?.quote ?? '');
+  const [pageNumber, setPageNumber] = useState<number | ''>(initialRecord?.page_number ?? '');
+  // 감상을 비워 저장하면 content 에 발췌문이 들어가므로, 수정 화면에서는 발췌문과 같은 내용이면 비워 보여준다
+  const [content, setContent] = useState(initialRecord && initialRecord.content !== initialRecord.quote ? initialRecord.content : '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -42,9 +47,8 @@ export default function BookForm({ userId, defaultDate, onSuccess }: BookFormPro
     if (!bookTitle.trim() || !quote.trim()) return;
 
     setIsSubmitting(true);
-    const { error } = await createClient()
-      .from('records')
-      .insert({
+    const error = await saveRecord(
+      {
         user_id: userId,
         type: 'BOOK',
         target_date: targetDate,
@@ -54,15 +58,17 @@ export default function BookForm({ userId, defaultDate, onSuccess }: BookFormPro
         page_number: pageNumber === '' ? null : pageNumber,
         // content 는 NOT NULL 이므로 감상이 없으면 발췌문으로 대체
         content: content.trim() || quote.trim(),
-        image_urls: [],
-      });
+        image_urls: initialRecord?.image_urls ?? [],
+      },
+      initialRecord?.id,
+    );
 
     if (error) {
-      toast(`독서 기록 저장에 실패했습니다: ${error.message}`, 'error');
+      toast(`독서 기록 ${isEdit ? '수정' : '저장'}에 실패했습니다: ${error}`, 'error');
       setIsSubmitting(false);
       return;
     }
-    toast('독서 노트를 저장했어요.');
+    toast(isEdit ? '독서 노트를 수정했어요.' : '독서 노트를 저장했어요.');
     if (onSuccess) onSuccess();
     else {
       router.push('/');
@@ -175,7 +181,7 @@ export default function BookForm({ userId, defaultDate, onSuccess }: BookFormPro
         disabled={isSubmitting}
         className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-3 text-sm font-medium text-white transition-all hover:bg-slate-800 disabled:opacity-50"
       >
-        {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" aria-label="저장 중" /> : <span>독서 노트 저장</span>}
+        {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" aria-label="저장 중" /> : <span>{isEdit ? '수정 저장' : '독서 노트 저장'}</span>}
       </button>
     </form>
   );

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Pin, Trash2 } from 'lucide-react';
+import Link from 'next/link';
+import { Pencil, Pin, Trash2 } from 'lucide-react';
 import type { DatabaseRecord } from '@/types/database.types';
 import { useSignedUrls } from '@/hooks/useStorageUpload';
 import { Modal } from '@/components/ui/Modal';
@@ -59,30 +60,39 @@ export function TimelineEntry({
               <weather.Icon className="h-3.5 w-3.5" aria-hidden /> {weather.label}
             </span>
           )}
-          {record.type === 'MEMO' && onTogglePin && (
-            <button
-              type="button"
-              aria-pressed={!!record.is_pinned}
-              aria-label={record.is_pinned ? '고정 해제' : '대시보드 상단에 고정'}
-              onClick={() => onTogglePin(record)}
-              className={cn(
-                'ml-auto shrink-0 rounded p-1 transition-colors',
-                record.is_pinned ? 'text-fuchsia-600' : 'text-slate-300 hover:text-slate-500',
-              )}
+          <span className="ml-auto flex shrink-0 items-center">
+            {record.type === 'MEMO' && onTogglePin && (
+              <button
+                type="button"
+                aria-pressed={!!record.is_pinned}
+                aria-label={record.is_pinned ? '고정 해제' : '대시보드 상단에 고정'}
+                onClick={() => onTogglePin(record)}
+                className={cn(
+                  'rounded p-1 transition-colors',
+                  record.is_pinned ? 'text-fuchsia-600' : 'text-slate-300 hover:text-slate-500',
+                )}
+              >
+                <Pin className={cn('h-3.5 w-3.5', record.is_pinned && 'fill-current')} />
+              </button>
+            )}
+            <Link
+              href={`/edit/${record.id}`}
+              aria-label="기록 수정"
+              className="rounded p-1 text-slate-300 transition-colors hover:bg-slate-100 hover:text-slate-700"
             >
-              <Pin className={cn('h-3.5 w-3.5', record.is_pinned && 'fill-current')} />
-            </button>
-          )}
-          {onDelete && (
-            <button
-              type="button"
-              aria-label="기록 삭제"
-              onClick={() => window.confirm('이 기록을 삭제하시겠습니까?') && onDelete(record)}
-              className={cn('shrink-0 rounded p-1 text-slate-300 hover:bg-rose-50 hover:text-rose-600', !(record.type === 'MEMO' && onTogglePin) && 'ml-auto')}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
-          )}
+              <Pencil className="h-3.5 w-3.5" />
+            </Link>
+            {onDelete && (
+              <button
+                type="button"
+                aria-label="기록 삭제"
+                onClick={() => window.confirm('이 기록을 삭제하시겠습니까?') && onDelete(record)}
+                className="rounded p-1 text-slate-300 hover:bg-rose-50 hover:text-rose-600"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </span>
         </div>
         {record.quote && (
           <blockquote className="rounded-xl bg-indigo-50 px-3.5 py-2.5 font-serif text-[15px] leading-relaxed text-indigo-950">

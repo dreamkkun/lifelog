@@ -3,16 +3,19 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Cloud, CloudRain, Loader2, Snowflake, Sun } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
+import { removeImages, saveRecord } from '@/lib/records';
+import { ExistingImages } from '@/components/ui/ExistingImages';
 import { ImageUploader } from '@/components/ui/ImageUploader';
 import { useToast } from '@/components/ui/Toast';
 import { cn, todayISO } from '@/lib/utils';
-import type { Weather } from '@/types/database.types';
+import type { DatabaseRecord, Weather } from '@/types/database.types';
 
 interface DiaryFormProps {
   userId: string;
   defaultDate?: string;
   onSuccess?: () => void;
+  /** 있으면 새 기록이 아니라 이 기록을 수정한다 */
+  initialRecord?: DatabaseRecord;
 }
 
 const weatherOptions: { type: Weather; label: string; icon: React.ReactNode }[] = [
@@ -22,14 +25,16 @@ const weatherOptions: { type: Weather; label: string; icon: React.ReactNode }[] 
   { type: 'SNOWY', label: '눈', icon: <Snowflake className="h-4 w-4 text-sky-400" aria-hidden /> },
 ];
 
-export default function DiaryForm({ userId, defaultDate, onSuccess }: DiaryFormProps) {
+export default function DiaryForm({ userId, defaultDate, onSuccess, initialRecord }: DiaryFormProps) {
+  const isEdit = !!initialRecord;
   const router = useRouter();
   const toast = useToast();
 
-  const [targetDate, setTargetDate] = useState(defaultDate || todayISO());
-  const [weather, setWeather] = useState<Weather>('SUNNY');
-  const [content, setContent] = useState('');
-  const [images, setImages] = useState<string[]>([]);
+  const [targetDate, setTargetDate] = useState(initialRecord?.target_date ?? (defaultDate || todayISO()));
+  const [weather, setWeather] = useState<Weather>(initialRecord?.weather ?? 'SUNNY');
+  const [content, setContent] = useState(initialRecord?.content ?? '');
+  const [images, setImages] = useState<string[]>([]); // 이번에 새로 올린 이미지
+  const [keptImages, setKeptImages] = useState<string[]>(initialRecord?.image_urls ?? []); // 수정 시 남겨 둔 기존 이미지
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -42,21 +47,25 @@ export default function DiaryForm({ userId, defaultDate, onSuccess }: DiaryFormP
     if (!content.trim()) return;
 
     setIsSubmitting(true);
-    const { error } = await createClient().from('records').insert({
-      user_id: userId,
-      type: 'DIARY',
-      target_date: targetDate,
-      weather,
-      content: content.trim(),
-      image_urls: images,
-    });
+    const error = await saveRecord(
+      {
+        user_id: userId,
+        type: 'DIARY',
+        target_date: targetDate,
+        weather,
+        content: content.trim(),
+        image_urls: [...keptImages, ...images],
+      },
+      initialRecord?.id,
+    );
 
     if (error) {
-      toast(`일기 저장에 실패했습니다: ${error.message}`, 'error');
-      setIsSubmitting(false); // 실패 시에만 재시도 허용 (성공 후 이동 중 중복 INSERT 차단)
+      toast(`일기 ${isEdit ? '수정' : '저장'}에 실패했습니다: ${error}`, 'error');
+      setIsSubmitting(false); // 실패 시에만 재시도 허용 (성공 후 이동 중 중복 저장 차단)
       return;
     }
-    toast('일기를 저장했어요.');
+    if (initialRecord) await removeImages(initialRecord.image_urls.filter((p) => !keptImages.includes(p)));
+    toast(isEdit ? '일기를 수정했어요.' : '일기를 저장했어요.');
     if (onSuccess) onSuccess();
     else {
       router.push('/');
@@ -134,6 +143,7 @@ export default function DiaryForm({ userId, defaultDate, onSuccess }: DiaryFormP
 
       <div className="space-y-1">
         <span className="block text-xs font-semibold text-slate-500">사진 (선택)</span>
+        <ExistingImages paths={keptImages} onRemove={(p) => setKeptImages(keptImages.filter((x) => x !== p))} />
         <ImageUploader targetDate={targetDate} onChange={setImages} />
       </div>
 
@@ -142,7 +152,7 @@ export default function DiaryForm({ userId, defaultDate, onSuccess }: DiaryFormP
         disabled={isSubmitting}
         className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-3 text-sm font-medium text-white transition-all hover:bg-slate-800 disabled:opacity-50"
       >
-        {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" aria-label="저장 중" /> : <span>일기 저장</span>}
+        {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" aria-label="저장 중" /> : <span>{isEdit ? '수정 저장' : '일기 저장'}</span>}
       </button>
     </form>
   );

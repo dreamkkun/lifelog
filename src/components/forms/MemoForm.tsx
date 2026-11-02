@@ -4,30 +4,35 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Lightbulb, Loader2, Pin, Tag, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { saveRecord } from '@/lib/records';
 import { MAX_PINNED } from '@/hooks/usePinnedIdeas';
 import { useToast } from '@/components/ui/Toast';
 import { cn, todayISO } from '@/lib/utils';
+import type { DatabaseRecord } from '@/types/database.types';
 
 interface MemoFormProps {
   userId: string;
   defaultDate?: string;
   onSuccess?: () => void;
+  /** 있으면 새 메모가 아니라 이 메모를 수정한다 */
+  initialRecord?: DatabaseRecord;
 }
 
 const MAX_TAGS = 5;
 const MAX_TAG_LENGTH = 20;
 
 /** 생각/아이디어 퀵 메모: 본문만 필수. 제목을 비우면 첫 줄이 제목이 된다. */
-export default function MemoForm({ userId, defaultDate, onSuccess }: MemoFormProps) {
+export default function MemoForm({ userId, defaultDate, onSuccess, initialRecord }: MemoFormProps) {
+  const isEdit = !!initialRecord;
   const router = useRouter();
   const toast = useToast();
 
-  const [targetDate, setTargetDate] = useState(defaultDate || todayISO());
-  const [memoTitle, setMemoTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [isPinned, setIsPinned] = useState(false);
+  const [targetDate, setTargetDate] = useState(initialRecord?.target_date ?? (defaultDate || todayISO()));
+  const [memoTitle, setMemoTitle] = useState(initialRecord?.memo_title ?? '');
+  const [content, setContent] = useState(initialRecord?.content ?? '');
+  const [isPinned, setIsPinned] = useState(initialRecord?.is_pinned ?? false);
   const [tagInput, setTagInput] = useState('');
-  const [tags, setTags] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>(initialRecord?.tags ?? []);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -83,7 +88,8 @@ export default function MemoForm({ userId, defaultDate, onSuccess }: MemoFormPro
     const finalTags = commitTag(tagInput, tags);
     const autoTitle = body.split('\n')[0].trim().slice(0, 40);
 
-    if (isPinned) {
+    // 이미 고정돼 있던 메모를 수정하는 경우에는 고정 개수를 다시 세지 않는다
+    if (isPinned && !initialRecord?.is_pinned) {
       const { count } = await supabase
         .from('records')
         .select('id', { count: 'exact', head: true })
@@ -97,23 +103,26 @@ export default function MemoForm({ userId, defaultDate, onSuccess }: MemoFormPro
       }
     }
 
-    const { error } = await supabase.from('records').insert({
-      user_id: userId,
-      type: 'MEMO',
-      target_date: targetDate,
-      memo_title: memoTitle.trim() || autoTitle,
-      content: body,
-      image_urls: [],
-      is_pinned: isPinned,
-      tags: finalTags,
-    });
+    const error = await saveRecord(
+      {
+        user_id: userId,
+        type: 'MEMO',
+        target_date: targetDate,
+        memo_title: memoTitle.trim() || autoTitle,
+        content: body,
+        image_urls: initialRecord?.image_urls ?? [],
+        is_pinned: isPinned,
+        tags: finalTags,
+      },
+      initialRecord?.id,
+    );
 
     if (error) {
-      toast(`메모 저장에 실패했습니다: ${error.message}`, 'error');
-      setIsSubmitting(false); // 실패 시에만 재시도 허용 (성공 후 이동 중 중복 INSERT 차단)
+      toast(`메모 ${isEdit ? '수정' : '저장'}에 실패했습니다: ${error}`, 'error');
+      setIsSubmitting(false); // 실패 시에만 재시도 허용 (성공 후 이동 중 중복 저장 차단)
       return;
     }
-    toast('메모를 저장했어요.');
+    toast(isEdit ? '메모를 수정했어요.' : '메모를 저장했어요.');
     if (onSuccess) onSuccess();
     else {
       router.push('/');
@@ -236,7 +245,7 @@ export default function MemoForm({ userId, defaultDate, onSuccess }: MemoFormPro
         disabled={isSubmitting}
         className="flex w-full items-center justify-center gap-2 rounded-xl bg-fuchsia-600 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-fuchsia-700 disabled:opacity-50"
       >
-        {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" aria-label="저장 중" /> : <span>메모 저장</span>}
+        {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" aria-label="저장 중" /> : <span>{isEdit ? '수정 저장' : '메모 저장'}</span>}
       </button>
     </form>
   );
