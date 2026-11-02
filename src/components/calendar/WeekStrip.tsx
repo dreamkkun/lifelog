@@ -6,7 +6,7 @@ import type { TodoItem } from '@/types/routine.types';
 import { cn, toISODate, todayISO, TYPE_META } from '@/lib/utils';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
-const ORDER: RecordType[] = ['DIARY', 'BOOK', 'LECTURE'];
+const ORDER: RecordType[] = ['DIARY', 'BOOK', 'LECTURE', 'MEMO'];
 
 /** 한 주(일~토) 띠: 날짜마다 기록 종류 점과 할일 표시 */
 export function WeekStrip({

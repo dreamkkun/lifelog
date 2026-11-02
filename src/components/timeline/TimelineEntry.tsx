@@ -1,21 +1,36 @@
 'use client';
 
 import { useState } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Pin, Trash2 } from 'lucide-react';
 import type { DatabaseRecord } from '@/types/database.types';
 import { useSignedUrls } from '@/hooks/useStorageUpload';
 import { Modal } from '@/components/ui/Modal';
 import { cn, TYPE_META, WEATHER_META } from '@/lib/utils';
 
 /** 타임라인의 기록 한 건: 왼쪽 유형 배지 + 본문 */
-export function TimelineEntry({ record, onDelete }: { record: DatabaseRecord; onDelete?: (r: DatabaseRecord) => void }) {
+export function TimelineEntry({
+  record,
+  onDelete,
+  onTogglePin,
+}: {
+  record: DatabaseRecord;
+  onDelete?: (r: DatabaseRecord) => void;
+  /** 메모(MEMO)의 핀 고정/해제 */
+  onTogglePin?: (r: DatabaseRecord) => void;
+}) {
   const meta = TYPE_META[record.type];
   const urls = useSignedUrls(record.image_urls);
   const [zoom, setZoom] = useState<string | null>(null);
   const weather = record.weather ? WEATHER_META[record.weather] : null;
 
   const title =
-    record.type === 'BOOK' ? record.book_title : record.type === 'LECTURE' ? record.lecture_title : null;
+    record.type === 'BOOK'
+      ? record.book_title
+      : record.type === 'LECTURE'
+        ? record.lecture_title
+        : record.type === 'MEMO'
+          ? record.memo_title
+          : null;
   const sub =
     record.type === 'BOOK'
       ? [record.book_author, record.page_number ? `p.${record.page_number}` : null]
@@ -44,12 +59,26 @@ export function TimelineEntry({ record, onDelete }: { record: DatabaseRecord; on
               <weather.Icon className="h-3.5 w-3.5" aria-hidden /> {weather.label}
             </span>
           )}
+          {record.type === 'MEMO' && onTogglePin && (
+            <button
+              type="button"
+              aria-pressed={!!record.is_pinned}
+              aria-label={record.is_pinned ? '고정 해제' : '대시보드 상단에 고정'}
+              onClick={() => onTogglePin(record)}
+              className={cn(
+                'ml-auto shrink-0 rounded p-1 transition-colors',
+                record.is_pinned ? 'text-fuchsia-600' : 'text-slate-300 hover:text-slate-500',
+              )}
+            >
+              <Pin className={cn('h-3.5 w-3.5', record.is_pinned && 'fill-current')} />
+            </button>
+          )}
           {onDelete && (
             <button
               type="button"
               aria-label="기록 삭제"
               onClick={() => window.confirm('이 기록을 삭제하시겠습니까?') && onDelete(record)}
-              className="ml-auto shrink-0 rounded p-1 text-slate-300 hover:bg-rose-50 hover:text-rose-600"
+              className={cn('shrink-0 rounded p-1 text-slate-300 hover:bg-rose-50 hover:text-rose-600', !(record.type === 'MEMO' && onTogglePin) && 'ml-auto')}
             >
               <Trash2 className="h-3.5 w-3.5" />
             </button>
@@ -62,6 +91,15 @@ export function TimelineEntry({ record, onDelete }: { record: DatabaseRecord; on
         )}
         {record.content && (
           <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">{record.content}</p>
+        )}
+        {record.tags && record.tags.length > 0 && (
+          <ul className="flex flex-wrap gap-1.5 pt-0.5">
+            {record.tags.map((t) => (
+              <li key={t} className="rounded-full bg-fuchsia-50 px-2 py-0.5 text-[11px] font-medium text-fuchsia-700">
+                #{t}
+              </li>
+            ))}
+          </ul>
         )}
         {record.image_urls?.length > 0 && (
           <ul className="flex gap-2 overflow-x-auto pt-1">

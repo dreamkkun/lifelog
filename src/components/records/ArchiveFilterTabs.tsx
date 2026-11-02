@@ -6,6 +6,7 @@ const TABS: { label: string; value: FilterType }[] = [
   { label: '일기', value: 'DIARY' },
   { label: '독서', value: 'BOOK' },
   { label: '강의', value: 'LECTURE' },
+  { label: '메모', value: 'MEMO' },
 ];
 
 export function ArchiveFilterTabs({

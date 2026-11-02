@@ -7,7 +7,7 @@ import type { DatabaseRecord, RecordType } from '@/types/database.types';
 export type FilterType = 'ALL' | RecordType;
 
 const PAGE_SIZE = 20;
-const SEARCH_FIELDS = ['content', 'book_title', 'lecture_title', 'book_author', 'quote', 'speaker'];
+const SEARCH_FIELDS = ['content', 'book_title', 'lecture_title', 'book_author', 'quote', 'speaker', 'memo_title'];
 
 /** 유형 필터 + 검색어(이미 디바운스된 값)로 아카이브를 조회한다. 20개씩 더 불러오기. */
 export function useArchiveRecords(userId: string | null, type: FilterType, search: string) {
@@ -39,7 +39,13 @@ export function useArchiveRecords(userId: string | null, type: FilterType, searc
 
     if (type !== 'ALL') query = query.eq('type', type);
     // 따옴표로 감싸 검색어 안의 쉼표·괄호가 or() 구분자로 해석되지 않게 한다. 공백이면 조건 없음.
-    if (term) query = query.or(SEARCH_FIELDS.map((f) => `${f}.ilike."%${term}%"`).join(','));
+    if (term) {
+      const clauses = SEARCH_FIELDS.map((f) => `${f}.ilike."%${term}%"`);
+      // 태그 검색: "#아이디어" 또는 "아이디어"처럼 태그 하나와 정확히 일치할 때
+      const tag = term.replace(/^#/, '');
+      if (tag && /^[^\s{},()]+$/.test(tag)) clauses.push(`tags.cs.{${tag}}`);
+      query = query.or(clauses.join(','));
+    }
     query = query.range(0, limit - 1);
 
     const { data, error, count } = await query;

@@ -14,13 +14,14 @@ const WEEKDAYS = [
   { label: '금', cls: 'text-slate-400' },
   { label: '토', cls: 'text-blue-500' },
 ];
-const ORDER: RecordType[] = ['DIARY', 'BOOK', 'LECTURE'];
+const ORDER: RecordType[] = ['DIARY', 'BOOK', 'LECTURE', 'MEMO'];
 const MAX_SNIPPETS = 3;
 
 /** 달력 칸에 보여줄 한 줄: 일기는 첫 문장, 독서/강의는 제목 */
 function snippet(r: DatabaseRecord): string {
   if (r.type === 'BOOK') return r.book_title || r.content;
   if (r.type === 'LECTURE') return r.lecture_title || r.content;
+  if (r.type === 'MEMO') return r.memo_title || r.content.split('\n')[0].trim();
   return r.content.split('\n')[0].trim();
 }
 

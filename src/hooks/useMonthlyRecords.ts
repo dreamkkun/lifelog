@@ -97,6 +97,11 @@ export function useRangeRecords(userId: string | null, start: string, end: strin
   }, [userId]);
 
   const removeLocal = useCallback((id: string) => setRecords((prev) => prev.filter((r) => r.id !== id)), []);
+  const patchLocal = useCallback(
+    (id: string, patch: Partial<DatabaseRecord>) =>
+      setRecords((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r))),
+    [],
+  );
 
-  return { records, isLoading, error, refetch: fetchRecords, removeLocal };
+  return { records, isLoading, error, refetch: fetchRecords, removeLocal, patchLocal };
 }

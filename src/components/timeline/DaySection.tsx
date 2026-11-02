@@ -25,6 +25,7 @@ export function DaySection({
   showRecords,
   todoActions,
   onDeleteRecord,
+  onTogglePin,
 }: {
   date: string;
   records: DatabaseRecord[];
@@ -33,6 +34,7 @@ export function DaySection({
   showRecords: boolean;
   todoActions: TodoActions;
   onDeleteRecord: (r: DatabaseRecord) => void;
+  onTogglePin?: (r: DatabaseRecord) => void;
 }) {
   const d = parseISO(date);
   const isToday = date === todayISO();
@@ -68,7 +70,7 @@ export function DaySection({
       {showRecords && records.length > 0 && (
         <div className="space-y-6">
           {records.map((r) => (
-            <TimelineEntry key={r.id} record={r} onDelete={onDeleteRecord} />
+            <TimelineEntry key={r.id} record={r} onDelete={onDeleteRecord} onTogglePin={onTogglePin} />
           ))}
         </div>
       )}

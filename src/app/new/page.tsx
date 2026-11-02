@@ -3,19 +3,21 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, BookOpen, GraduationCap, PenLine } from 'lucide-react';
+import { ArrowLeft, BookOpen, GraduationCap, Lightbulb, PenLine } from 'lucide-react';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import DiaryForm from '@/components/forms/DiaryForm';
 import BookForm from '@/components/forms/BookForm';
 import LectureForm from '@/components/forms/LectureForm';
+import MemoForm from '@/components/forms/MemoForm';
 import { TabButton } from '@/components/ui/TabButton';
 
-type TabMode = 'diary' | 'book' | 'lecture';
+type TabMode = 'diary' | 'book' | 'lecture' | 'memo';
 
 const TABS: { mode: TabMode; label: string; accent: string; icon: React.ElementType }[] = [
-  { mode: 'diary', label: '일기 작성', accent: 'text-emerald-600', icon: PenLine },
-  { mode: 'book', label: '독서 발췌', accent: 'text-indigo-600', icon: BookOpen },
-  { mode: 'lecture', label: '강의 / OCR', accent: 'text-amber-600', icon: GraduationCap },
+  { mode: 'diary', label: '일기', accent: 'text-emerald-600', icon: PenLine },
+  { mode: 'book', label: '독서', accent: 'text-indigo-600', icon: BookOpen },
+  { mode: 'lecture', label: '강의', accent: 'text-amber-600', icon: GraduationCap },
+  { mode: 'memo', label: '생각/메모', accent: 'text-fuchsia-600', icon: Lightbulb },
 ];
 
 const isTabMode = (v: string | null): v is TabMode => TABS.some((t) => t.mode === v);
@@ -80,7 +82,7 @@ function NewRecordContent() {
       </div>
       <h1 className="font-serif text-2xl font-semibold tracking-tight text-slate-900">새 기록</h1>
 
-      <div role="tablist" aria-label="기록 유형" className="grid grid-cols-3 rounded-xl bg-slate-100 p-1">
+      <div role="tablist" aria-label="기록 유형" className="grid grid-cols-4 rounded-xl bg-slate-100 p-1">
         {TABS.map(({ mode, label, accent, icon: Icon }) => (
           <TabButton
             key={mode}
@@ -103,6 +105,7 @@ function NewRecordContent() {
             {activeTab === 'diary' && <DiaryForm userId={userId} defaultDate={defaultDate} />}
             {activeTab === 'book' && <BookForm userId={userId} defaultDate={defaultDate} />}
             {activeTab === 'lecture' && <LectureForm userId={userId} defaultDate={defaultDate} />}
+            {activeTab === 'memo' && <MemoForm userId={userId} defaultDate={defaultDate} />}
           </>
         )}
       </div>

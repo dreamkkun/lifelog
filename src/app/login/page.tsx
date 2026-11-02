@@ -58,6 +58,9 @@ function SetupNotice() {
   );
 }
 
+// Supabase 에서 Google 공급자를 켠 뒤에만 NEXT_PUBLIC_ENABLE_GOOGLE_LOGIN=true 로 버튼을 노출한다.
+const GOOGLE_ENABLED = process.env.NEXT_PUBLIC_ENABLE_GOOGLE_LOGIN === 'true';
+
 function LoginForm() {
   const params = useSearchParams();
   const [email, setEmail] = useState('');
@@ -131,12 +134,16 @@ function LoginForm() {
           <Mail className="h-4 w-4" aria-hidden /> 로그인 링크 받기
         </Button>
       </form>
-      <div className="flex items-center gap-3 text-xs text-slate-400">
-        <span className="h-px flex-1 bg-slate-200" /> 또는 <span className="h-px flex-1 bg-slate-200" />
-      </div>
-      <Button type="button" variant="ghost" onClick={google} className="w-full">
-        Google로 계속하기
-      </Button>
+      {GOOGLE_ENABLED && (
+        <>
+        <div className="flex items-center gap-3 text-xs text-slate-400">
+          <span className="h-px flex-1 bg-slate-200" /> 또는 <span className="h-px flex-1 bg-slate-200" />
+        </div>
+        <Button type="button" variant="ghost" onClick={google} className="w-full">
+          Google로 계속하기
+        </Button>
+        </>
+      )}
       {error && (
         <p role="alert" className="text-sm text-rose-600">
           {error}

@@ -11,6 +11,8 @@ import { HomeView } from '@/components/home/HomeView';
 import DailyOracleBanner from '@/components/dashboard/DailyOracleBanner';
 import ProfileSetupModal from '@/components/dashboard/ProfileSetupModal';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { usePinnedIdeas } from '@/hooks/usePinnedIdeas';
+import PinnedIdeasSection from '@/components/dashboard/PinnedIdeasSection';
 import { useToast } from '@/components/ui/Toast';
 import type { DatabaseRecord } from '@/types/database.types';
 import { toISODate } from '@/lib/utils';
@@ -49,7 +51,7 @@ function Home({ userId }: { userId: string }) {
     [],
   );
 
-  const { records, isLoading, error, removeLocal } = useRangeRecords(
+  const { records, isLoading, error, removeLocal, patchLocal } = useRangeRecords(
     userId,
     range.start,
     range.end,
@@ -80,6 +82,20 @@ function Home({ userId }: { userId: string }) {
     [removeLocal, toast],
   );
 
+  const { pinned, setPin } = usePinnedIdeas(userId);
+  const handleTogglePin = useCallback(
+    async (record: DatabaseRecord) => {
+      const next = !record.is_pinned;
+      const err = await setPin(record, next);
+      if (err) {
+        toast(err, 'error');
+        return;
+      }
+      patchLocal(record.id, { is_pinned: next });
+    },
+    [setPin, patchLocal, toast],
+  );
+
   const signOut = async () => {
     await createClient().auth.signOut();
     router.replace('/login');
@@ -89,10 +105,13 @@ function Home({ userId }: { userId: string }) {
     <>
       <HomeView
         banner={
-          <DailyOracleBanner
-            profile={profile}
-            onOpenProfileSetup={() => setProfileOpen(true)}
-          />
+          <div className="space-y-6">
+            <DailyOracleBanner
+              profile={profile}
+              onOpenProfileSetup={() => setProfileOpen(true)}
+            />
+            <PinnedIdeasSection items={pinned} onUnpin={handleTogglePin} />
+          </div>
         }
         records={records}
         todos={todos}
@@ -101,6 +120,7 @@ function Home({ userId }: { userId: string }) {
         onRangeChange={onRangeChange}
         todoActions={todoActions}
         onDeleteRecord={handleDelete}
+        onTogglePin={handleTogglePin}
         onSignOut={signOut}
       />
       <ProfileSetupModal

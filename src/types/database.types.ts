@@ -1,6 +1,6 @@
 import type { TodoItem, UserProfile } from '@/types/routine.types';
 
-export type RecordType = 'DIARY' | 'BOOK' | 'LECTURE';
+export type RecordType = 'DIARY' | 'BOOK' | 'LECTURE' | 'MEMO';
 export type Weather = 'SUNNY' | 'CLOUDY' | 'RAINY' | 'SNOWY';
 
 export interface DatabaseRecord {
@@ -18,6 +18,10 @@ export interface DatabaseRecord {
   speaker?: string | null;
   ocr_extracted_text?: string | null;
   weather?: Weather | null;
+  // 메모/아이디어 전용
+  memo_title?: string | null;
+  is_pinned?: boolean;
+  tags?: string[];
   created_at: string;
   updated_at: string;
 }

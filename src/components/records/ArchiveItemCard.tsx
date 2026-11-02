@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { Trash2 } from 'lucide-react';
+import { Pin, Trash2 } from 'lucide-react';
 import type { DatabaseRecord } from '@/types/database.types';
 import { useSignedUrls } from '@/hooks/useStorageUpload';
 import { Modal } from '@/components/ui/Modal';
@@ -36,6 +36,11 @@ export function ArchiveItemCard({ item, onDelete }: { item: DatabaseRecord; onDe
             </span>
           )}
           {item.ocr_extracted_text && <span className="text-slate-400">사진 글자 인식됨</span>}
+          {item.type === 'MEMO' && item.is_pinned && (
+            <span className="flex items-center gap-1 text-fuchsia-600">
+              <Pin className="h-3.5 w-3.5 fill-current" aria-hidden /> 고정됨
+            </span>
+          )}
           <button
             type="button"
             aria-label="기록 영구 삭제"
@@ -55,6 +60,10 @@ export function ArchiveItemCard({ item, onDelete }: { item: DatabaseRecord; onDe
           </div>
         )}
 
+        {item.type === 'MEMO' && item.memo_title && (
+          <h3 className="font-serif text-lg font-semibold text-slate-900">{item.memo_title}</h3>
+        )}
+
         {item.type === 'LECTURE' && item.lecture_title && (
           <div className="flex flex-wrap items-baseline gap-x-2">
             <h3 className="font-serif text-lg font-semibold text-slate-900">{item.lecture_title}</h3>
@@ -69,6 +78,16 @@ export function ArchiveItemCard({ item, onDelete }: { item: DatabaseRecord; onDe
         )}
 
         <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">{item.content}</p>
+
+        {item.tags && item.tags.length > 0 && (
+          <ul className="flex flex-wrap gap-1.5">
+            {item.tags.map((t) => (
+              <li key={t} className="rounded-full bg-fuchsia-50 px-2 py-0.5 text-[11px] font-medium text-fuchsia-700">
+                #{t}
+              </li>
+            ))}
+          </ul>
+        )}
 
         {item.image_urls?.length > 0 && (
           <ul className={cn('pt-1', item.type === 'LECTURE' ? 'grid grid-cols-3 gap-2 sm:grid-cols-4' : 'flex gap-2 overflow-x-auto')}>

@@ -9,9 +9,12 @@
 -- ------------------------------------------------------------------------------
 DO $$ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'record_type') THEN
-        CREATE TYPE public.record_type AS ENUM ('DIARY', 'BOOK', 'LECTURE');
+        CREATE TYPE public.record_type AS ENUM ('DIARY', 'BOOK', 'LECTURE', 'MEMO');
     END IF;
 END $$;
+
+-- 이미 만들어진 타입에는 MEMO 값을 추가한다 (새로 만든 경우에는 이미 있어 건너뜀)
+ALTER TYPE public.record_type ADD VALUE IF NOT EXISTS 'MEMO';
 
 -- ------------------------------------------------------------------------------
 -- 2. 테이블 (user_id 는 로그인한 사용자로 자동 채워진다: DEFAULT auth.uid())
@@ -54,6 +57,12 @@ CREATE TABLE IF NOT EXISTS public.records (
     updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- 생각/아이디어 메모(MEMO) 전용 컬럼: 핀 고정, 태그, 제목. 이미 만든 테이블에도 추가된다.
+ALTER TABLE public.records
+    ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN DEFAULT FALSE NOT NULL,
+    ADD COLUMN IF NOT EXISTS tags TEXT[] DEFAULT ARRAY[]::TEXT[],
+    ADD COLUMN IF NOT EXISTS memo_title TEXT;
+
 -- 일일 할 일
 CREATE TABLE IF NOT EXISTS public.todos (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -91,6 +100,8 @@ ALTER TABLE public.user_profiles ADD CONSTRAINT user_profiles_star_sign_check CH
 -- ------------------------------------------------------------------------------
 CREATE INDEX IF NOT EXISTS idx_records_user_date ON public.records(user_id, target_date DESC);
 CREATE INDEX IF NOT EXISTS idx_records_user_type ON public.records(user_id, type);
+CREATE INDEX IF NOT EXISTS idx_records_user_pinned ON public.records(user_id, is_pinned) WHERE is_pinned = TRUE;
+CREATE INDEX IF NOT EXISTS idx_records_tags ON public.records USING GIN(tags);
 CREATE INDEX IF NOT EXISTS idx_todos_user_date ON public.todos(user_id, target_date DESC);
 CREATE INDEX IF NOT EXISTS idx_todos_user_completed ON public.todos(user_id, is_completed);
 

@@ -14,7 +14,7 @@ import { ArchiveItemCard } from '@/components/records/ArchiveItemCard';
 import { useToast } from '@/components/ui/Toast';
 import type { DatabaseRecord } from '@/types/database.types';
 
-const TYPE_PARAMS: Record<string, FilterType> = { diary: 'DIARY', book: 'BOOK', lecture: 'LECTURE' };
+const TYPE_PARAMS: Record<string, FilterType> = { diary: 'DIARY', book: 'BOOK', lecture: 'LECTURE', memo: 'MEMO' };
 
 function ArchiveList() {
   const router = useRouter();

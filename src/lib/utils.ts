@@ -26,6 +26,7 @@ export const TYPE_META: Record<
   DIARY: { label: '일기', short: '일', dot: 'bg-emerald-500', rule: 'border-emerald-500', text: 'text-emerald-700', badge: 'bg-emerald-50 text-emerald-700' },
   BOOK: { label: '독서노트', short: '독', dot: 'bg-indigo-500', rule: 'border-indigo-500', text: 'text-indigo-700', badge: 'bg-indigo-50 text-indigo-700' },
   LECTURE: { label: '강의메모', short: '강', dot: 'bg-amber-500', rule: 'border-amber-500', text: 'text-amber-700', badge: 'bg-amber-50 text-amber-700' },
+  MEMO: { label: '메모', short: '메', dot: 'bg-fuchsia-500', rule: 'border-fuchsia-500', text: 'text-fuchsia-700', badge: 'bg-fuchsia-50 text-fuchsia-700' },
 };
 
 export const ALLOWED_IMAGE_EXT = ['jpg', 'jpeg', 'png', 'webp'];

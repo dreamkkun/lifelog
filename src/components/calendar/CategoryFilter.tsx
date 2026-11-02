@@ -10,6 +10,7 @@ const CHIPS: { value: HomeFilter; label: string; dot?: string }[] = [
   { value: 'DIARY', label: '일기', dot: TYPE_META.DIARY.dot },
   { value: 'BOOK', label: '독서', dot: TYPE_META.BOOK.dot },
   { value: 'LECTURE', label: '강의', dot: TYPE_META.LECTURE.dot },
+  { value: 'MEMO', label: '메모', dot: TYPE_META.MEMO.dot },
 ];
 
 /** 종류별 보기. 주간/월간 모두에 적용되고, 기록 종류는 전체 목록으로 이어진다. */

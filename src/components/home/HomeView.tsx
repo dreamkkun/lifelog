@@ -46,6 +46,8 @@ export interface HomeViewProps {
   onRangeChange: (start: string, end: string) => void;
   todoActions: TodoActions;
   onDeleteRecord: (r: DatabaseRecord) => void;
+  /** 메모의 핀 고정/해제 */
+  onTogglePin?: (r: DatabaseRecord) => void;
   onSignOut?: () => void;
   /** 목록 위에 놓을 배너(오늘의 한마디 등) */
   banner?: React.ReactNode;
@@ -60,6 +62,7 @@ export function HomeView({
   onRangeChange,
   todoActions,
   onDeleteRecord,
+  onTogglePin,
   onSignOut,
   banner,
 }: HomeViewProps) {
@@ -182,6 +185,7 @@ export function HomeView({
       showRecords={showRecords}
       todoActions={todoActions}
       onDeleteRecord={onDeleteRecord}
+      onTogglePin={onTogglePin}
     />
   );
 
