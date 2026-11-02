@@ -23,9 +23,25 @@ export const viewport: Viewport = {
   viewportFit: 'cover', // 노치/다이내믹 아일랜드 영역까지 사용
 };
 
+// 링크 미리보기(og:image 등)의 절대 주소 기준. 도메인을 바꾸면 NEXT_PUBLIC_SITE_URL 로 덮어쓴다.
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://lifelog-in.vercel.app';
+const TITLE = 'LifeLog & Insight';
+const DESCRIPTION = '일기·독서·강의·메모를 한곳에 모아, 어디서나 이어 쓰는 나만의 기록장';
+
 export const metadata: Metadata = {
-  title: 'LifeLog & Insight',
-  description: '모바일 & PC 실시간 동기화 개인 기록 보관소',
+  metadataBase: new URL(SITE_URL),
+  title: TITLE,
+  description: DESCRIPTION,
+  // 카카오톡 등 메신저로 주소를 공유할 때 보이는 카드. 이미지는 app/opengraph-image.tsx 가 만든다.
+  openGraph: {
+    type: 'website',
+    siteName: 'LifeLog',
+    title: TITLE,
+    description: DESCRIPTION,
+    locale: 'ko_KR',
+    url: '/',
+  },
+  twitter: { card: 'summary_large_image', title: TITLE, description: DESCRIPTION },
   applicationName: 'LifeLog',
   appleWebApp: {
     capable: true,
