@@ -1,8 +1,8 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Mail } from 'lucide-react';
+import { KeyRound, Mail } from 'lucide-react';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import { Button, inputClass } from '@/components/ui/Field';
 
@@ -61,18 +61,40 @@ function SetupNotice() {
 // Supabase 에서 Google 공급자를 켠 뒤에만 NEXT_PUBLIC_ENABLE_GOOGLE_LOGIN=true 로 버튼을 노출한다.
 const GOOGLE_ENABLED = process.env.NEXT_PUBLIC_ENABLE_GOOGLE_LOGIN === 'true';
 
+type Mode = 'link' | 'password';
+const MODE_KEY = 'lifelog:login-mode';
+
 function LoginForm() {
   const params = useSearchParams();
+  const [mode, setMode] = useState<Mode>('link');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(
-    params.get('error') ? '로그인하지 못했어요. 메일의 링크를 다시 눌러 보거나 새 링크를 받아 주세요.' : null,
+    params.get('error')
+      ? '링크가 만료됐거나, 링크를 요청한 곳과 다른 브라우저·앱에서 열렸어요. 새 링크를 받은 뒤 같은 브라우저에서 열거나, 비밀번호로 로그인해 보세요.'
+      : null,
   );
+
+  // 마지막으로 쓴 방식을 기억한다 (비밀번호를 쓰는 사람은 다음부터 바로 비밀번호 칸이 보인다)
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(MODE_KEY) === 'password') setMode('password');
+    } catch {
+      // 저장소를 못 쓰는 환경에서는 기본값 유지
+    }
+  }, []);
 
   if (!isSupabaseConfigured) return <SetupNotice />;
 
   const redirectTo = () => `${window.location.origin}/auth/callback`;
+
+  const changeMode = (m: Mode) => {
+    setMode(m);
+    setSent(false);
+    setError(null);
+  };
 
   const sendMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,6 +109,26 @@ function LoginForm() {
     else setSent(true);
   };
 
+  // 비밀번호 로그인: 메일 링크를 거치지 않아 폰·설치형 앱에서도 같은 화면에서 끝난다.
+  const signInWithPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (loading) return;
+    setLoading(true);
+    setError(null);
+    const { error } = await createClient().auth.signInWithPassword({ email: email.trim(), password });
+    if (error) {
+      setLoading(false);
+      setError('이메일 또는 비밀번호가 맞지 않아요. 비밀번호를 아직 만들지 않았다면 "이메일 링크"로 로그인한 뒤 설정에서 만들 수 있어요.');
+      return;
+    }
+    try {
+      localStorage.setItem(MODE_KEY, 'password');
+    } catch {
+      // 무시
+    }
+    window.location.assign('/'); // 세션 쿠키가 생긴 상태로 미들웨어를 다시 거치게 한다
+  };
+
   const google = async () => {
     setError(null);
     const { error } = await createClient().auth.signInWithOAuth({
@@ -98,54 +140,120 @@ function LoginForm() {
 
   if (sent) {
     return (
-      <div role="status" className="space-y-3 border-l-2 border-emerald-500 pl-4">
-        <h2 className="font-serif text-lg font-semibold text-slate-900">메일함을 확인해 주세요</h2>
-        <p className="text-sm leading-relaxed text-slate-600">
-          <strong className="font-semibold text-slate-800">{email}</strong>로 로그인 링크를 보냈어요. 메일의 링크를 누르면 바로 들어와요.
-        </p>
-        <button
-          type="button"
-          onClick={() => setSent(false)}
-          className="text-xs font-semibold text-slate-500 underline underline-offset-2 hover:text-slate-900"
-        >
-          다른 주소로 다시 받기
-        </button>
+      <div className="space-y-4">
+        <div role="status" className="space-y-3 border-l-2 border-emerald-500 pl-4">
+          <h2 className="font-serif text-lg font-semibold text-slate-900">메일함을 확인해 주세요</h2>
+          <p className="text-sm leading-relaxed text-slate-600">
+            <strong className="font-semibold text-slate-800">{email}</strong>로 로그인 링크를 보냈어요. 메일의 링크를 누르면 바로 들어와요.
+          </p>
+          <p className="text-xs leading-relaxed text-slate-400">
+            링크는 로그인을 요청한 같은 브라우저에서 열어야 해요. 메일 앱 안에서 열리는 화면에서는 실패할 수 있어요.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs font-semibold text-slate-500">
+          <button type="button" onClick={() => setSent(false)} className="underline underline-offset-2 hover:text-slate-900">
+            다른 주소로 다시 받기
+          </button>
+          <button type="button" onClick={() => changeMode('password')} className="underline underline-offset-2 hover:text-slate-900">
+            비밀번호로 로그인하기
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <form onSubmit={sendMagicLink} className="space-y-3">
-        <label htmlFor="login-email" className="sr-only">
-          이메일 주소
-        </label>
-        <input
-          id="login-email"
-          type="email"
-          required
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="이메일 주소"
-          className={inputClass}
-        />
-        <Button type="submit" loading={loading} className="w-full">
-          <Mail className="h-4 w-4" aria-hidden /> 로그인 링크 받기
-        </Button>
-      </form>
+      <div role="tablist" aria-label="로그인 방법" className="grid grid-cols-2 rounded-xl bg-slate-100 p-1 text-xs font-semibold">
+        {(
+          [
+            { m: 'link', label: '이메일 링크', Icon: Mail },
+            { m: 'password', label: '비밀번호', Icon: KeyRound },
+          ] as const
+        ).map(({ m, label, Icon }) => (
+          <button
+            key={m}
+            type="button"
+            role="tab"
+            aria-selected={mode === m}
+            onClick={() => changeMode(m)}
+            className={`flex items-center justify-center gap-1.5 rounded-lg py-2 transition-all ${
+              mode === m ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            <Icon className="h-3.5 w-3.5" aria-hidden /> {label}
+          </button>
+        ))}
+      </div>
+
+      {mode === 'link' ? (
+        <form onSubmit={sendMagicLink} className="space-y-3">
+          <label htmlFor="login-email" className="sr-only">
+            이메일 주소
+          </label>
+          <input
+            id="login-email"
+            type="email"
+            required
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="이메일 주소"
+            className={inputClass}
+          />
+          <Button type="submit" loading={loading} className="w-full">
+            <Mail className="h-4 w-4" aria-hidden /> 로그인 링크 받기
+          </Button>
+        </form>
+      ) : (
+        <form onSubmit={signInWithPassword} className="space-y-3">
+          <label htmlFor="login-email-pw" className="sr-only">
+            이메일 주소
+          </label>
+          <input
+            id="login-email-pw"
+            type="email"
+            required
+            autoComplete="username"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="이메일 주소"
+            className={inputClass}
+          />
+          <label htmlFor="login-password" className="sr-only">
+            비밀번호
+          </label>
+          <input
+            id="login-password"
+            type="password"
+            required
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="비밀번호"
+            className={inputClass}
+          />
+          <Button type="submit" loading={loading} disabled={!email.trim() || !password} className="w-full">
+            <KeyRound className="h-4 w-4" aria-hidden /> 로그인
+          </Button>
+          <p className="text-xs leading-relaxed text-slate-400">
+            비밀번호는 &ldquo;이메일 링크&rdquo;로 로그인한 뒤 설정 화면에서 만들 수 있어요.
+          </p>
+        </form>
+      )}
+
       {GOOGLE_ENABLED && (
         <>
-        <div className="flex items-center gap-3 text-xs text-slate-400">
-          <span className="h-px flex-1 bg-slate-200" /> 또는 <span className="h-px flex-1 bg-slate-200" />
-        </div>
-        <Button type="button" variant="ghost" onClick={google} className="w-full">
-          Google로 계속하기
-        </Button>
+          <div className="flex items-center gap-3 text-xs text-slate-400">
+            <span className="h-px flex-1 bg-slate-200" /> 또는 <span className="h-px flex-1 bg-slate-200" />
+          </div>
+          <Button type="button" variant="ghost" onClick={google} className="w-full">
+            Google로 계속하기
+          </Button>
         </>
       )}
       {error && (
-        <p role="alert" className="text-sm text-rose-600">
+        <p role="alert" className="text-sm leading-relaxed text-rose-600">
           {error}
         </p>
       )}
