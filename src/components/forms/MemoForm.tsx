@@ -158,7 +158,7 @@ export default function MemoForm({ userId, defaultDate, onSuccess, initialRecord
             'flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all',
             isPinned
               ? 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700 shadow-sm'
-              : 'border-slate-200 bg-white text-slate-400 hover:text-slate-600',
+              : 'border-slate-200 bg-white text-slate-500 hover:text-slate-600',
           )}
         >
           <Pin className={cn('h-3.5 w-3.5', isPinned && 'fill-fuchsia-600 text-fuchsia-600')} aria-hidden />
@@ -232,7 +232,7 @@ export default function MemoForm({ userId, defaultDate, onSuccess, initialRecord
           ))}
           {tags.length < MAX_TAGS && (
             <div className="flex min-w-[120px] flex-1 items-center gap-1">
-              <Tag className="ml-1 h-3.5 w-3.5 text-slate-400" aria-hidden />
+              <Tag className="ml-1 h-3.5 w-3.5 text-slate-500" aria-hidden />
               <input
                 id="memo-tag-input"
                 type="text"
@@ -246,7 +246,7 @@ export default function MemoForm({ userId, defaultDate, onSuccess, initialRecord
                     setTagInput('');
                   }
                 }}
-                className="w-full border-none !bg-transparent p-1 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none"
+                className="w-full border-none !bg-transparent p-1 text-sm text-slate-800 placeholder:text-slate-500 focus:outline-none"
               />
             </div>
           )}

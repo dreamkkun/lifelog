@@ -69,7 +69,7 @@ export function TimelineEntry({
                 onClick={() => onTogglePin(record)}
                 className={cn(
                   'rounded p-1 transition-colors',
-                  record.is_pinned ? 'text-fuchsia-600' : 'text-slate-300 hover:text-slate-500',
+                  record.is_pinned ? 'text-fuchsia-600' : 'text-slate-500 hover:text-slate-800',
                 )}
               >
                 <Pin className={cn('h-3.5 w-3.5', record.is_pinned && 'fill-current')} />
@@ -78,7 +78,7 @@ export function TimelineEntry({
             <Link
               href={`/edit/${record.id}`}
               aria-label="기록 수정"
-              className="rounded p-1 text-slate-300 transition-colors hover:bg-slate-100 hover:text-slate-700"
+              className="relative rounded p-1 text-slate-500 before:absolute before:-inset-2.5 before:content-[''] transition-colors hover:bg-slate-100 hover:text-slate-700"
             >
               <Pencil className="h-3.5 w-3.5" />
             </Link>
@@ -87,7 +87,7 @@ export function TimelineEntry({
                 type="button"
                 aria-label="기록 삭제"
                 onClick={() => window.confirm('이 기록을 삭제하시겠습니까?') && onDelete(record)}
-                className="rounded p-1 text-slate-300 hover:bg-rose-50 hover:text-rose-600"
+                className="relative rounded p-1 text-slate-500 before:absolute before:-inset-2.5 before:content-[''] hover:bg-rose-50 hover:text-rose-600"
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
@@ -105,7 +105,7 @@ export function TimelineEntry({
         {record.tags && record.tags.length > 0 && (
           <ul className="flex flex-wrap gap-1.5 pt-0.5">
             {record.tags.map((t) => (
-              <li key={t} className="rounded-full bg-fuchsia-50 px-2 py-0.5 text-[11px] font-medium text-fuchsia-700">
+              <li key={t} className="rounded-full bg-fuchsia-50 px-2 py-0.5 text-xs font-medium text-fuchsia-700">
                 #{t}
               </li>
             ))}

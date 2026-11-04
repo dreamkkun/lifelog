@@ -38,7 +38,7 @@ export default function TodoInputForm({
         onChange={(e) => setText(e.target.value)}
         placeholder={placeholder}
         maxLength={200}
-        className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-200"
+        className="min-w-0 flex-1 min-h-11 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-500 focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-200"
       />
       <button
         type="submit"

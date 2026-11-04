@@ -63,7 +63,7 @@ export default function TodoItem({
           aria-label="수정 저장"
           disabled={busy}
           onClick={save}
-          className="rounded p-1.5 text-emerald-600 hover:bg-emerald-50 disabled:opacity-40"
+          className="rounded p-2.5 text-emerald-600 hover:bg-emerald-50 disabled:opacity-40"
         >
           <Check className="h-4 w-4" />
         </button>
@@ -71,7 +71,7 @@ export default function TodoItem({
           type="button"
           aria-label="수정 취소"
           onClick={() => setEditing(false)}
-          className="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+          className="rounded p-2.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
         >
           <X className="h-4 w-4" />
         </button>
@@ -102,7 +102,7 @@ export default function TodoItem({
         <span
           className={cn(
             'break-words text-sm leading-snug transition-colors duration-300',
-            todo.is_completed ? 'select-none text-slate-400 line-through decoration-slate-300' : 'font-medium text-slate-800',
+            todo.is_completed ? 'select-none text-slate-500 line-through decoration-slate-300' : 'font-medium text-slate-800',
           )}
         >
           {todo.content}
@@ -112,7 +112,7 @@ export default function TodoItem({
         type="button"
         aria-label={`${todo.content} 수정`}
         onClick={startEdit}
-        className="rounded p-1 text-slate-300 transition-opacity hover:text-slate-700 focus:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+        className="relative rounded p-1 text-slate-500 before:absolute before:-inset-2 before:content-[''] transition-opacity hover:text-slate-700 focus:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
       >
         <Pencil className="h-3.5 w-3.5" />
       </button>
@@ -120,7 +120,7 @@ export default function TodoItem({
         type="button"
         aria-label={`${todo.content} 삭제`}
         onClick={() => onRemove(todo)}
-        className="rounded p-1 text-slate-300 transition-opacity hover:text-rose-600 focus:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+        className="relative rounded p-1 text-slate-500 before:absolute before:-inset-2 before:content-[''] transition-opacity hover:text-rose-600 focus:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
       >
         <Trash2 className="h-3.5 w-3.5" />
       </button>

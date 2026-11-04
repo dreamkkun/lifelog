@@ -21,7 +21,7 @@ export default function PinnedIdeasSection({ items, onUnpin }: PinnedIdeasSectio
         <h2 id="pinned-title" className="text-sm font-semibold text-slate-900">
           고정한 아이디어
         </h2>
-        <span className="text-xs tabular-nums text-slate-400">
+        <span className="text-xs tabular-nums text-slate-500">
           {items.length}/{MAX_PINNED}
         </span>
       </div>
@@ -45,13 +45,13 @@ export default function PinnedIdeasSection({ items, onUnpin }: PinnedIdeasSectio
                 {r.tags && r.tags.length > 0 && (
                   <ul className="mt-2.5 flex flex-wrap gap-1.5">
                     {r.tags.map((t) => (
-                      <li key={t} className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-fuchsia-700">
+                      <li key={t} className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-fuchsia-700">
                         #{t}
                       </li>
                     ))}
                   </ul>
                 )}
-                <p className="mt-2.5 text-[11px] text-slate-400">{formatShort(r.target_date)}</p>
+                <p className="mt-2.5 text-xs text-slate-500">{formatShort(r.target_date)}</p>
               </article>
             </li>
           );

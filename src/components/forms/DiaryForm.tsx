@@ -20,7 +20,7 @@ interface DiaryFormProps {
 
 const weatherOptions: { type: Weather; label: string; icon: React.ReactNode }[] = [
   { type: 'SUNNY', label: '맑음', icon: <Sun className="h-4 w-4 text-amber-500" aria-hidden /> },
-  { type: 'CLOUDY', label: '흐림', icon: <Cloud className="h-4 w-4 text-slate-400" aria-hidden /> },
+  { type: 'CLOUDY', label: '흐림', icon: <Cloud className="h-4 w-4 text-slate-500" aria-hidden /> },
   { type: 'RAINY', label: '비', icon: <CloudRain className="h-4 w-4 text-blue-500" aria-hidden /> },
   { type: 'SNOWY', label: '눈', icon: <Snowflake className="h-4 w-4 text-sky-400" aria-hidden /> },
 ];
@@ -111,7 +111,7 @@ export default function DiaryForm({ userId, defaultDate, onSuccess, initialRecor
                 onClick={() => setWeather(w.type)}
                 className={cn(
                   'flex items-center justify-center gap-1 rounded-md py-1.5 text-xs font-medium transition-all',
-                  weather === w.type ? 'bg-white font-bold text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600',
+                  weather === w.type ? 'bg-white font-bold text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-600',
                 )}
               >
                 {w.icon}

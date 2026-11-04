@@ -6,28 +6,29 @@ import { KeyRound, Mail } from 'lucide-react';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import { Button, inputClass } from '@/components/ui/Field';
 
-/** 일주일 샘플: 이 앱이 어떻게 기록을 보여주는지 로그인 전에 미리 알려준다 */
+const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+
+/** 이번 주(일~토) 띠: 이 앱이 날짜 중심이라는 걸 로그인 전에 보여준다. 날짜는 브라우저에서 계산한다. */
 function WeekStrip() {
-  const days = [
-    { d: '월', n: 12, dots: ['bg-emerald-500'] },
-    { d: '화', n: 13, dots: [] },
-    { d: '수', n: 14, dots: ['bg-emerald-500', 'bg-amber-500'] },
-    { d: '목', n: 15, dots: ['bg-indigo-500'] },
-    { d: '금', n: 16, dots: ['bg-emerald-500'] },
-    { d: '토', n: 17, dots: [] },
-    { d: '일', n: 18, dots: ['bg-emerald-500', 'bg-indigo-500', 'bg-amber-500'] },
-  ];
+  const [today, setToday] = useState<Date | null>(null);
+  useEffect(() => setToday(new Date()), []);
+
+  const days = WEEKDAYS.map((label, i) => {
+    if (!today) return { label, n: null as number | null, isToday: false };
+    const d = new Date(today);
+    d.setDate(today.getDate() - today.getDay() + i);
+    return { label, n: d.getDate(), isToday: i === today.getDay() };
+  });
+
   return (
     <div aria-hidden className="grid grid-cols-7 gap-px overflow-hidden rounded-xl border border-slate-200 bg-slate-200">
       {days.map((x) => (
-        <div key={x.n} className="flex h-16 flex-col items-center justify-between bg-white py-2">
-          <span className="text-[10px] text-slate-400">{x.d}</span>
-          <span className="text-sm font-semibold tabular-nums text-slate-700">{x.n}</span>
-          <span className="flex h-1.5 gap-0.5">
-            {x.dots.map((c) => (
-              <span key={c} className={`h-1.5 w-1.5 rounded-full ${c}`} />
-            ))}
-          </span>
+        <div
+          key={x.label}
+          className={`flex h-14 flex-col items-center justify-center gap-1 ${x.isToday ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}`}
+        >
+          <span className={`text-xs ${x.isToday ? 'text-slate-300' : 'text-slate-500'}`}>{x.label}</span>
+          <span className="text-sm font-semibold tabular-nums">{x.n ?? ' '}</span>
         </div>
       ))}
     </div>
@@ -40,7 +41,7 @@ function SetupNotice() {
       <h2 id="setup-title" className="font-serif text-lg font-semibold text-slate-900">
         Supabase 연결이 필요해요
       </h2>
-      <ol className="list-decimal space-y-4 pl-5 text-sm leading-relaxed text-slate-600 marker:text-slate-400">
+      <ol className="list-decimal space-y-4 pl-5 text-sm leading-relaxed text-slate-600 marker:text-slate-500">
         <li className="space-y-2">
           <p>
             프로젝트 폴더에 <code className="font-mono text-[13px] text-slate-800">.env.local</code> 파일을 만들고 두 값을 채우세요.
@@ -146,7 +147,7 @@ function LoginForm() {
           <p className="text-sm leading-relaxed text-slate-600">
             <strong className="font-semibold text-slate-800">{email}</strong>로 로그인 링크를 보냈어요. 메일의 링크를 누르면 바로 들어와요.
           </p>
-          <p className="text-xs leading-relaxed text-slate-400">
+          <p className="text-xs leading-relaxed text-slate-500">
             링크는 로그인을 요청한 같은 브라우저에서 열어야 해요. 메일 앱 안에서 열리는 화면에서는 실패할 수 있어요.
           </p>
         </div>
@@ -177,7 +178,7 @@ function LoginForm() {
             role="tab"
             aria-selected={mode === m}
             onClick={() => changeMode(m)}
-            className={`flex items-center justify-center gap-1.5 rounded-lg py-2 transition-all ${
+            className={`flex items-center justify-center gap-1.5 min-h-11 rounded-lg py-2 transition-all ${
               mode === m ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
             }`}
           >
@@ -236,7 +237,7 @@ function LoginForm() {
           <Button type="submit" loading={loading} disabled={!email.trim() || !password} className="w-full">
             <KeyRound className="h-4 w-4" aria-hidden /> 로그인
           </Button>
-          <p className="text-xs leading-relaxed text-slate-400">
+          <p className="text-xs leading-relaxed text-slate-500">
             비밀번호는 &ldquo;이메일 링크&rdquo;로 로그인한 뒤 설정 화면에서 만들 수 있어요.
           </p>
         </form>
@@ -244,7 +245,7 @@ function LoginForm() {
 
       {GOOGLE_ENABLED && (
         <>
-          <div className="flex items-center gap-3 text-xs text-slate-400">
+          <div className="flex items-center gap-3 text-xs text-slate-500">
             <span className="h-px flex-1 bg-slate-200" /> 또는 <span className="h-px flex-1 bg-slate-200" />
           </div>
           <Button type="button" variant="ghost" onClick={google} className="w-full">
@@ -263,12 +264,15 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <main className="mx-auto flex min-h-[70dvh] max-w-sm flex-col justify-center gap-8 p-6">
-      <div className="space-y-2">
-        <h1 className="font-serif text-5xl font-semibold tracking-tight text-slate-900">LifeLog</h1>
-        <p className="text-sm text-slate-500">일기, 독서, 강의를 한곳에 모아 두세요</p>
+    // 소개는 위, 로그인 칸은 아래(엄지가 닿는 곳)에 둔다. 하단 탭바·홈 인디케이터 여백은 layout 이 이미 잡는다.
+    <main className="mx-auto flex min-h-[calc(100dvh-6rem)] max-w-sm flex-col justify-between gap-10 p-6 pt-16">
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <h1 className="font-serif text-5xl font-semibold tracking-tight text-slate-900">LifeLog</h1>
+          <p className="text-sm text-slate-500">일기, 독서, 강의를 한곳에 모아 두세요</p>
+        </div>
+        <WeekStrip />
       </div>
-      <WeekStrip />
       <Suspense>
         <LoginForm />
       </Suspense>

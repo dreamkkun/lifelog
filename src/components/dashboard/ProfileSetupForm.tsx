@@ -93,7 +93,7 @@ export default function ProfileSetupForm({ userId, initialProfile, onSaved, subm
             윤달이에요
           </label>
         )}
-        <p className="text-[11px] leading-relaxed text-slate-400">
+        <p className="text-xs leading-relaxed text-slate-500">
           {isLunar
             ? '음력은 양력으로 바꿔 별자리를 계산하고, 띠는 입력한 음력 연도 기준이에요.'
             : '양력 생일은 입춘(2월 4일경) 이전이면 전년도 띠로 계산해요. 별자리 경계일은 해마다 하루쯤 다를 수 있어요.'}
@@ -106,7 +106,7 @@ export default function ProfileSetupForm({ userId, initialProfile, onSaved, subm
           <div className="flex items-center gap-2">
             <span className="text-xl" aria-hidden>{ZODIAC_EMOJI_MAP[meta.zodiac]}</span>
             <div>
-              <span className="block text-[11px] text-slate-500">{meta.fromBirth ? '계산된 띠' : '저장된 띠'}</span>
+              <span className="block text-xs text-slate-500">{meta.fromBirth ? '계산된 띠' : '저장된 띠'}</span>
               <strong className="font-semibold text-slate-900">{meta.zodiac}띠</strong>
             </div>
           </div>
@@ -114,7 +114,7 @@ export default function ProfileSetupForm({ userId, initialProfile, onSaved, subm
           <div className="flex items-center gap-2">
             <span className="text-xl" aria-hidden>{STAR_SIGN_EMOJI_MAP[meta.starSign]}</span>
             <div>
-              <span className="block text-[11px] text-slate-500">{meta.fromBirth ? '계산된 별자리' : '저장된 별자리'}</span>
+              <span className="block text-xs text-slate-500">{meta.fromBirth ? '계산된 별자리' : '저장된 별자리'}</span>
               <strong className="font-semibold text-slate-900">{meta.starSign}</strong>
             </div>
           </div>
@@ -160,7 +160,7 @@ export default function ProfileSetupForm({ userId, initialProfile, onSaved, subm
         {isSaving ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Check className="h-4 w-4" strokeWidth={2.5} aria-hidden />}
         {isSaving ? '저장하는 중…' : submitLabel}
       </button>
-      <p className="text-center text-[11px] text-slate-400">성향 가이드는 재미로 참고해 주세요.</p>
+      <p className="text-center text-xs text-slate-500">성향 가이드는 재미로 참고해 주세요.</p>
     </form>
   );
 }

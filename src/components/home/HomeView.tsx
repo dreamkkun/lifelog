@@ -227,7 +227,7 @@ export function HomeView({
             <button
               type="button"
               onClick={() => moveTo(new Date())}
-              className="shrink-0 whitespace-nowrap rounded-lg border border-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-100"
+              className="shrink-0 whitespace-nowrap rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100"
             >
               오늘
             </button>

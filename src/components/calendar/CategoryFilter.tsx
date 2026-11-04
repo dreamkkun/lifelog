@@ -41,7 +41,7 @@ export function CategoryFilter({ value, onChange }: { value: HomeFilter; onChang
       {value !== 'TODO' && (
         <Link
           href={listHref}
-          className="ml-auto hidden shrink-0 whitespace-nowrap text-[11px] font-semibold text-slate-500 underline-offset-2 hover:text-slate-900 hover:underline sm:block"
+          className="ml-auto hidden shrink-0 whitespace-nowrap text-xs font-semibold text-slate-500 underline-offset-2 hover:text-slate-900 hover:underline sm:block"
         >
           {value === 'ALL' ? '전체 목록' : `${current?.label} 전체 보기`}
         </Link>

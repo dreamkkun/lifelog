@@ -20,7 +20,7 @@ export default function AndroidInstallPrompt() {
       <button
         type="button"
         onClick={() => dismissModal(false)}
-        className="absolute right-3.5 top-3.5 rounded-lg p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+        className="absolute right-1.5 top-1.5 rounded-lg p-2.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-600"
         aria-label="닫기"
       >
         <X className="h-4 w-4" />

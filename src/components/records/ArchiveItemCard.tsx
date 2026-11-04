@@ -24,8 +24,8 @@ export function ArchiveItemCard({ item, onDelete }: { item: DatabaseRecord; onDe
         <span className="block font-serif text-3xl font-semibold leading-none tabular-nums text-slate-900">
           {format(d, 'd')}
         </span>
-        <span className="mt-1.5 block text-[11px] text-slate-500">{format(d, 'yyyy.M')}</span>
-        <span className="block text-[11px] text-slate-400">{format(d, 'EEE', { locale: ko })}</span>
+        <span className="mt-1.5 block text-xs text-slate-500">{format(d, 'yyyy.M')}</span>
+        <span className="block text-xs text-slate-500">{format(d, 'EEE', { locale: ko })}</span>
       </time>
 
       <div className={cn('min-w-0 flex-1 space-y-2 border-l-2 pl-4', meta.rule)}>
@@ -36,7 +36,7 @@ export function ArchiveItemCard({ item, onDelete }: { item: DatabaseRecord; onDe
               <weather.Icon className="h-3.5 w-3.5" aria-hidden /> {weather.label}
             </span>
           )}
-          {item.ocr_extracted_text && <span className="text-slate-400">사진 글자 인식됨</span>}
+          {item.ocr_extracted_text && <span className="text-slate-500">사진 글자 인식됨</span>}
           {item.type === 'MEMO' && item.is_pinned && (
             <span className="flex items-center gap-1 text-fuchsia-600">
               <Pin className="h-3.5 w-3.5 fill-current" aria-hidden /> 고정됨
@@ -45,7 +45,7 @@ export function ArchiveItemCard({ item, onDelete }: { item: DatabaseRecord; onDe
           <Link
             href={`/edit/${item.id}`}
             aria-label="기록 수정"
-            className="ml-auto rounded p-1 text-slate-300 transition-colors hover:bg-slate-100 hover:text-slate-700"
+            className="ml-auto relative rounded p-1 text-slate-500 before:absolute before:-inset-2.5 before:content-[''] transition-colors hover:bg-slate-100 hover:text-slate-700"
           >
             <Pencil className="h-4 w-4" />
           </Link>
@@ -53,7 +53,7 @@ export function ArchiveItemCard({ item, onDelete }: { item: DatabaseRecord; onDe
             type="button"
             aria-label="기록 영구 삭제"
             onClick={() => window.confirm('이 기록을 영구 삭제하시겠습니까?') && onDelete(item)}
-            className="rounded p-1 text-slate-300 transition-colors hover:bg-rose-50 hover:text-rose-600"
+            className="relative rounded p-1 text-slate-500 before:absolute before:-inset-2.5 before:content-[''] transition-colors hover:bg-rose-50 hover:text-rose-600"
           >
             <Trash2 className="h-4 w-4" />
           </button>
@@ -90,7 +90,7 @@ export function ArchiveItemCard({ item, onDelete }: { item: DatabaseRecord; onDe
         {item.tags && item.tags.length > 0 && (
           <ul className="flex flex-wrap gap-1.5">
             {item.tags.map((t) => (
-              <li key={t} className="rounded-full bg-fuchsia-50 px-2 py-0.5 text-[11px] font-medium text-fuchsia-700">
+              <li key={t} className="rounded-full bg-fuchsia-50 px-2 py-0.5 text-xs font-medium text-fuchsia-700">
                 #{t}
               </li>
             ))}

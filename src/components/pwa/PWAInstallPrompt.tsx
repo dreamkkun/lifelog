@@ -21,7 +21,7 @@ export default function PWAInstallPrompt() {
       <button
         type="button"
         onClick={() => dismissPrompt(false)}
-        className="absolute right-3.5 top-3.5 rounded-lg p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+        className="absolute right-1.5 top-1.5 rounded-lg p-2.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-600"
         aria-label="안내 닫기"
       >
         <X className="h-4 w-4" />
@@ -34,13 +34,13 @@ export default function PWAInstallPrompt() {
           <h2 id="ios-install-title" className="text-xs font-bold text-slate-900">
             앱으로 더 편리하게 기록하세요
           </h2>
-          <p className="text-[11px] text-slate-500">주소창 없는 전체화면으로 실행됩니다</p>
+          <p className="text-xs text-slate-500">주소창 없는 전체화면으로 실행됩니다</p>
         </div>
       </div>
 
       <ol className="space-y-2 rounded-xl border border-slate-100 bg-slate-50/80 p-3 text-xs text-slate-700">
         <li className="flex items-center gap-2">
-          <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold text-slate-600">
+          <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-slate-200 text-[11px] font-bold text-slate-600">
             1
           </span>
           <span>
@@ -49,7 +49,7 @@ export default function PWAInstallPrompt() {
           </span>
         </li>
         <li className="flex items-center gap-2">
-          <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold text-slate-600">
+          <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-slate-200 text-[11px] font-bold text-slate-600">
             2
           </span>
           <span>
@@ -59,8 +59,8 @@ export default function PWAInstallPrompt() {
         </li>
       </ol>
 
-      <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2 text-[11px]">
-        <button type="button" onClick={() => dismissPrompt(true)} className="text-slate-400 transition-colors hover:text-slate-600">
+      <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2 text-xs">
+        <button type="button" onClick={() => dismissPrompt(true)} className="text-slate-500 transition-colors hover:text-slate-600">
           7일 동안 보지 않기
         </button>
         <button

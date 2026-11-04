@@ -46,7 +46,7 @@ export function DaySection({
       <div className="flex items-center gap-2.5">
         <span className="font-serif text-3xl font-semibold leading-none tabular-nums text-slate-900">{format(d, 'd')}</span>
         <span className="text-sm text-slate-500">{format(d, 'M월 EEEE', { locale: ko })}</span>
-        {isToday && <span className="rounded-full bg-slate-900 px-2 py-0.5 text-[11px] font-semibold text-white">오늘</span>}
+        {isToday && <span className="rounded-full bg-slate-900 px-2 py-0.5 text-xs font-semibold text-white">오늘</span>}
         {showRecords && (
           <Link
             href={`/new?type=diary&date=${date}`}
@@ -78,7 +78,7 @@ export function DaySection({
       )}
 
       {empty && !showTodos && (
-        <p className="py-4 text-sm text-slate-400">이 날은 비어 있어요. 한 줄만 남겨도 달력에 표시돼요.</p>
+        <p className="py-4 text-sm text-slate-500">이 날은 비어 있어요. 한 줄만 남겨도 달력에 표시돼요.</p>
       )}
     </section>
   );

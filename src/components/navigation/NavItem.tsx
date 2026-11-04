@@ -38,19 +38,19 @@ export function NavItem({ label, href, icon: Icon, active, isAction, badge }: Na
       aria-current={active ? 'page' : undefined}
       className={cn(
         'flex select-none flex-col items-center justify-center py-1 transition-colors',
-        active ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600',
+        active ? 'text-slate-900' : 'text-slate-500 hover:text-slate-600',
       )}
     >
       <div className="relative">
         <Icon className={cn('h-5 w-5', active ? 'stroke-[2.2]' : 'stroke-2')} />
         {badge ? (
-          <span className="absolute -right-2 -top-1.5 min-w-4 rounded-full bg-rose-500 px-1 text-center text-[9px] font-bold leading-4 text-white">
+          <span className="absolute -right-2 -top-1.5 min-w-4 rounded-full bg-rose-500 px-1 text-center text-[10px] font-bold leading-4 text-white">
             {badge > 99 ? '99+' : badge}
           </span>
         ) : null}
         {active && <span className="absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-slate-900" />}
       </div>
-      <span className={cn('mt-1 text-[10px] tracking-tight', active ? 'font-bold' : 'font-medium')}>{label}</span>
+      <span className={cn('mt-1 text-[11px] tracking-tight', active ? 'font-bold' : 'font-medium')}>{label}</span>
     </Link>
   );
 }

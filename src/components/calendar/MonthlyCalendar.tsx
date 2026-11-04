@@ -7,11 +7,11 @@ import { cn, todayISO, TYPE_META } from '@/lib/utils';
 
 const WEEKDAYS = [
   { label: '일', cls: 'text-rose-500' },
-  { label: '월', cls: 'text-slate-400' },
-  { label: '화', cls: 'text-slate-400' },
-  { label: '수', cls: 'text-slate-400' },
-  { label: '목', cls: 'text-slate-400' },
-  { label: '금', cls: 'text-slate-400' },
+  { label: '월', cls: 'text-slate-500' },
+  { label: '화', cls: 'text-slate-500' },
+  { label: '수', cls: 'text-slate-500' },
+  { label: '목', cls: 'text-slate-500' },
+  { label: '금', cls: 'text-slate-500' },
   { label: '토', cls: 'text-blue-500' },
 ];
 const ORDER: RecordType[] = ['DIARY', 'BOOK', 'LECTURE', 'MEMO'];
@@ -104,7 +104,7 @@ export function MonthlyCalendar({
               <span className="flex items-center justify-between">
                 <span className="text-xs font-semibold tabular-nums">{i + 1}</span>
                 {stat && (
-                  <span className={cn('text-[10px] tabular-nums', isSelected ? 'text-white/70' : 'text-slate-400')}>
+                  <span className={cn('text-[11px] tabular-nums', isSelected ? 'text-white/70' : 'text-slate-500')}>
                     ☑ {stat.done}/{stat.total}
                   </span>
                 )}
@@ -125,13 +125,13 @@ export function MonthlyCalendar({
                     {items.slice(0, MAX_SNIPPETS).map((r) => (
                       <span key={r.id} className="flex min-w-0 items-center gap-1">
                         <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', TYPE_META[r.type].dot)} />
-                        <span className={cn('truncate text-[10px] leading-4', isSelected ? 'text-white/80' : 'text-slate-500')}>
+                        <span className={cn('truncate text-[11px] leading-4', isSelected ? 'text-white/80' : 'text-slate-500')}>
                           {snippet(r)}
                         </span>
                       </span>
                     ))}
                     {items.length > MAX_SNIPPETS && (
-                      <span className={cn('text-[10px]', isSelected ? 'text-white/60' : 'text-slate-400')}>
+                      <span className={cn('text-[11px]', isSelected ? 'text-white/60' : 'text-slate-500')}>
                         +{items.length - MAX_SNIPPETS}
                       </span>
                     )}

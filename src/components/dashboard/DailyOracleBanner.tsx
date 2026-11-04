@@ -28,7 +28,7 @@ export default function DailyOracleBanner({ profile, onOpenProfileSetup }: Daily
               type="button"
               onClick={onOpenProfileSetup}
               aria-label="성향 프로필 수정"
-              className="flex flex-wrap justify-end gap-1.5 text-[11px] font-medium"
+              className="flex flex-wrap justify-end gap-1.5 text-xs font-medium"
             >
               <span className="rounded-full bg-white/10 px-2.5 py-1 hover:bg-white/20">{profile.mbti}</span>
               <span className="rounded-full bg-white/10 px-2.5 py-1 hover:bg-white/20">

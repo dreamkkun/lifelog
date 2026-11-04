@@ -46,7 +46,7 @@ export function WeekStrip({
               i === 6 && !isSelected && 'text-blue-500',
             )}
           >
-            <span className="text-[11px]">{w}</span>
+            <span className="text-xs">{w}</span>
             <span className={cn('my-1 text-[17px] font-bold tabular-nums', isSelected ? 'text-white' : 'text-slate-900')}>
               {format(day, 'd')}
             </span>

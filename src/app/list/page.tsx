@@ -90,7 +90,7 @@ function ArchiveList() {
   if (!userId) {
     return (
       <div className="flex min-h-[60dvh] items-center justify-center" role="status">
-        <Loader2 className="h-8 w-8 animate-spin text-slate-400" aria-label="세션 확인 중" />
+        <Loader2 className="h-8 w-8 animate-spin text-slate-500" aria-label="세션 확인 중" />
       </div>
     );
   }
@@ -124,7 +124,7 @@ function ArchiveList() {
         <ArchiveSearchBar value={searchQuery} onChange={setSearchQuery} isSearching={isSearching} />
       </div>
 
-      <div className="flex items-center justify-between px-1 text-xs text-slate-400" aria-live="polite">
+      <div className="flex items-center justify-between px-1 text-xs text-slate-500" aria-live="polite">
         <span>
           {isFiltered ? '검색 결과' : '전체'} <strong className="font-semibold text-slate-700">{total}</strong>건
         </span>
@@ -141,14 +141,14 @@ function ArchiveList() {
         {records.length === 0 && !isLoading ? (
           <div className="space-y-2 py-20 text-center">
             <p className="font-serif text-base text-slate-700">찾는 기록이 없어요</p>
-            <p className="text-xs text-slate-400">검색어를 줄이거나 다른 유형을 골라 보세요.</p>
+            <p className="text-xs text-slate-500">검색어를 줄이거나 다른 유형을 골라 보세요.</p>
           </div>
         ) : (
           records.map((item) => <ArchiveItemCard key={item.id} item={item} onDelete={handleDelete} />)
         )}
       </div>
 
-      <div ref={sentinel} className="flex h-10 items-center justify-center text-slate-400">
+      <div ref={sentinel} className="flex h-10 items-center justify-center text-slate-500">
         {isLoading && records.length > 0 && <Loader2 className="h-5 w-5 animate-spin" aria-label="불러오는 중" />}
       </div>
     </div>

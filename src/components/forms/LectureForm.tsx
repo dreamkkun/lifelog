@@ -236,7 +236,7 @@ export default function LectureForm({ userId, defaultDate, onSuccess, initialRec
                   <CheckCircle2 className="h-4 w-4" aria-hidden /> 스토리지 업로드 및 분석 완료
                 </div>
               )}
-              <label htmlFor={fileInputId} className="cursor-pointer text-[11px] text-slate-500 underline">
+              <label htmlFor={fileInputId} className="cursor-pointer text-xs text-slate-500 underline">
                 다른 사진으로 변경
               </label>
             </div>
@@ -246,7 +246,7 @@ export default function LectureForm({ userId, defaultDate, onSuccess, initialRec
                 <UploadCloud className="h-5 w-5" aria-hidden />
               </span>
               <span className="text-xs font-semibold text-slate-700">사진을 끌어놓거나 눌러서 선택</span>
-              <span className="text-[11px] text-slate-400">JPG·PNG·WEBP, 10MB 이하 · 텍스트를 판독해 본문에 자동 추가해요</span>
+              <span className="text-xs text-slate-500">JPG·PNG·WEBP, 10MB 이하 · 텍스트를 판독해 본문에 자동 추가해요</span>
             </label>
           )}
           <input
@@ -291,7 +291,7 @@ export default function LectureForm({ userId, defaultDate, onSuccess, initialRec
             강의 메모 / 필기 요약 *
           </label>
           {extractedText && (
-            <span className="flex items-center gap-1 text-[11px] font-medium text-amber-600">
+            <span className="flex items-center gap-1 text-xs font-medium text-amber-600">
               <FileText className="h-3.5 w-3.5" aria-hidden /> OCR 추출 텍스트 자동 삽입됨
             </span>
           )}

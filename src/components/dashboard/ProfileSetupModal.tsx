@@ -40,7 +40,7 @@ export default function ProfileSetupModal({ isOpen, onClose, userId, initialProf
           type="button"
           onClick={onClose}
           aria-label="닫기"
-          className="absolute right-4 top-4 rounded-xl p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+          className="absolute right-2 top-2 rounded-xl p-3 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-600"
         >
           <X className="h-5 w-5" />
         </button>
