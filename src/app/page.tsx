@@ -61,11 +61,12 @@ function Home({ userId }: { userId: string }) {
     error: todoError,
     addTodo,
     toggleTodo,
+    updateTodo,
     removeTodo,
   } = useRangeTodos(userId, range.start, range.end);
   const todoActions = useMemo(
-    () => ({ addTodo, toggleTodo, removeTodo }),
-    [addTodo, toggleTodo, removeTodo],
+    () => ({ addTodo, toggleTodo, updateTodo, removeTodo }),
+    [addTodo, toggleTodo, updateTodo, removeTodo],
   );
 
   const handleDelete = useCallback(

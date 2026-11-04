@@ -100,6 +100,14 @@ export function useRangeTodos(userId: string | null, start: string, end: string)
     return null;
   }, []);
 
+  const updateTodo = useCallback(async (id: string, content: string): Promise<string | null> => {
+    const { data, error } = await createClient().from('todos').update({ content }).eq('id', id).select('id');
+    if (error) return error.message;
+    if (!data || data.length === 0) return '수정할 할일을 찾지 못했어요.';
+    setTodos((prev) => prev.map((t) => (t.id === id ? { ...t, content } : t)));
+    return null;
+  }, []);
+
   const removeTodo = useCallback(async (id: string): Promise<string | null> => {
     const { error } = await createClient().from('todos').delete().eq('id', id);
     if (error) return error.message;
@@ -107,5 +115,5 @@ export function useRangeTodos(userId: string | null, start: string, end: string)
     return null;
   }, []);
 
-  return { todos, error, addTodo, toggleTodo, removeTodo };
+  return { todos, error, addTodo, toggleTodo, updateTodo, removeTodo };
 }

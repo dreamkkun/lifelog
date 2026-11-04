@@ -11,11 +11,12 @@ interface DailyTodoListProps {
   isToday: boolean;
   onAdd: (date: string, text: string) => Promise<string | null>;
   onToggle: (id: string, completed: boolean) => Promise<string | null>;
+  onUpdate: (id: string, content: string) => Promise<string | null>;
   onRemove: (id: string) => Promise<string | null>;
 }
 
 /** 선택한 날짜의 할일: 진행률, 미완료(위)/완료(아래) 정렬, 체크·삭제·추가 */
-export default function DailyTodoList({ date, todos, isToday, onAdd, onToggle, onRemove }: DailyTodoListProps) {
+export default function DailyTodoList({ date, todos, isToday, onAdd, onToggle, onUpdate, onRemove }: DailyTodoListProps) {
   const toast = useToast();
   const completed = todos.filter((t) => t.is_completed).length;
   // 미완료가 위, 완료가 아래. 같은 그룹 안에서는 입력 순서.
@@ -51,6 +52,11 @@ export default function DailyTodoList({ date, todos, isToday, onAdd, onToggle, o
               key={t.id}
               todo={t}
               onToggle={async (x) => fail('체크하지 못했어요', await onToggle(x.id, !x.is_completed))}
+              onUpdate={async (x, text) => {
+                const err = await onUpdate(x.id, text);
+                fail('수정하지 못했어요', err);
+                return !err;
+              }}
               onRemove={async (x) => fail('삭제하지 못했어요', await onRemove(x.id))}
             />
           ))}

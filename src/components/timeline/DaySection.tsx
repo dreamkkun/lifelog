@@ -13,6 +13,7 @@ import { todayISO } from '@/lib/utils';
 export interface TodoActions {
   addTodo: (date: string, text: string) => Promise<string | null>;
   toggleTodo: (id: string, done: boolean) => Promise<string | null>;
+  updateTodo: (id: string, content: string) => Promise<string | null>;
   removeTodo: (id: string) => Promise<string | null>;
 }
 
@@ -63,6 +64,7 @@ export function DaySection({
           isToday={isToday}
           onAdd={todoActions.addTodo}
           onToggle={todoActions.toggleTodo}
+          onUpdate={todoActions.updateTodo}
           onRemove={todoActions.removeTodo}
         />
       )}

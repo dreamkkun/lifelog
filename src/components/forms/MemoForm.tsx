@@ -4,7 +4,9 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Lightbulb, Loader2, Pin, Tag, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { saveRecord } from '@/lib/records';
+import { removeImages, saveRecord } from '@/lib/records';
+import { ExistingImages } from '@/components/ui/ExistingImages';
+import { ImageUploader } from '@/components/ui/ImageUploader';
 import { MAX_PINNED } from '@/hooks/usePinnedIdeas';
 import { useToast } from '@/components/ui/Toast';
 import { cn, todayISO } from '@/lib/utils';
@@ -33,10 +35,14 @@ export default function MemoForm({ userId, defaultDate, onSuccess, initialRecord
   const [isPinned, setIsPinned] = useState(initialRecord?.is_pinned ?? false);
   const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState<string[]>(initialRecord?.tags ?? []);
+  const [images, setImages] = useState<string[]>([]); // 이번에 새로 올린 사진
+  const [keptImages, setKeptImages] = useState<string[]>(initialRecord?.image_urls ?? []); // 수정 시 남겨 둔 기존 사진
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  const contentInvalid = submitted && !content.trim();
+  const hasImages = keptImages.length + images.length > 0;
+  // 사진이 있으면 글 없이 사진만으로도 저장할 수 있다
+  const contentInvalid = submitted && !content.trim() && !hasImages;
 
   /** 태그 하나를 추가한다. '#' 와 공백은 걷어내고, 중복·개수 초과는 무시한다. */
   const commitTag = (raw: string, current: string[]): string[] => {
@@ -79,14 +85,14 @@ export default function MemoForm({ userId, defaultDate, onSuccess, initialRecord
     if (isSubmitting) return;
     setSubmitted(true);
     const body = content.trim();
-    if (!body) return;
+    if (!body && !hasImages) return;
 
     setIsSubmitting(true);
     const supabase = createClient();
 
     // 입력창에 남아 있는 태그도 저장에 포함한다
     const finalTags = commitTag(tagInput, tags);
-    const autoTitle = body.split('\n')[0].trim().slice(0, 40);
+    const autoTitle = body ? body.split('\n')[0].trim().slice(0, 40) : '사진 메모';
 
     // 이미 고정돼 있던 메모를 수정하는 경우에는 고정 개수를 다시 세지 않는다
     if (isPinned && !initialRecord?.is_pinned) {
@@ -110,7 +116,7 @@ export default function MemoForm({ userId, defaultDate, onSuccess, initialRecord
         target_date: targetDate,
         memo_title: memoTitle.trim() || autoTitle,
         content: body,
-        image_urls: initialRecord?.image_urls ?? [],
+        image_urls: [...keptImages, ...images],
         is_pinned: isPinned,
         tags: finalTags,
       },
@@ -122,6 +128,7 @@ export default function MemoForm({ userId, defaultDate, onSuccess, initialRecord
       setIsSubmitting(false); // 실패 시에만 재시도 허용 (성공 후 이동 중 중복 저장 차단)
       return;
     }
+    if (initialRecord) await removeImages(initialRecord.image_urls.filter((p) => !keptImages.includes(p)));
     toast(isEdit ? '메모를 수정했어요.' : '메모를 저장했어요.');
     if (onSuccess) onSuccess();
     else {
@@ -179,7 +186,7 @@ export default function MemoForm({ userId, defaultDate, onSuccess, initialRecord
 
       <div>
         <label htmlFor="memo-content" className="mb-1 block text-xs font-semibold text-slate-500">
-          생각 / 아이디어 *
+          생각 / 아이디어 {hasImages ? '(사진이 있으면 생략 가능)' : '*'}
         </label>
         <textarea
           id="memo-content"
@@ -194,6 +201,12 @@ export default function MemoForm({ userId, defaultDate, onSuccess, initialRecord
           )}
         />
         {contentInvalid && <p className="mt-1 text-xs text-rose-600">내용을 입력해주세요.</p>}
+      </div>
+
+      <div className="space-y-1">
+        <span className="block text-xs font-semibold text-slate-500">사진 (선택 · 촬영하거나 앨범에서 첨부)</span>
+        <ExistingImages paths={keptImages} onRemove={(p) => setKeptImages(keptImages.filter((x) => x !== p))} />
+        <ImageUploader targetDate={targetDate} onChange={setImages} />
       </div>
 
       <div className="space-y-1.5">
