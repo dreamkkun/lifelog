@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { endOfWeek, startOfWeek } from 'date-fns';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
@@ -31,7 +32,34 @@ function HomeSkeleton() {
   );
 }
 
-function Home({ userId }: { userId: string }) {
+interface AccountInfo {
+  id: string;
+  email: string;
+  nickname: string;
+}
+
+/** 지금 로그인한 계정 표시: 별명이 있으면 별명과 이메일, 없으면 별명 정하기 안내 */
+function AccountLine({ account }: { account: AccountInfo }) {
+  return (
+    <p className="flex flex-wrap items-baseline gap-x-2 px-1 text-sm text-slate-600">
+      {account.nickname ? (
+        <>
+          <strong className="font-semibold text-slate-900">{account.nickname}</strong>
+          <span className="text-xs text-slate-500">{account.email}</span>
+        </>
+      ) : (
+        <>
+          <span className="text-xs text-slate-500">{account.email}</span>
+          <Link href="/settings/profile" className="text-xs font-semibold text-slate-700 underline underline-offset-2">
+            별명 정하기
+          </Link>
+        </>
+      )}
+    </p>
+  );
+}
+
+function Home({ userId, account }: { userId: string; account: AccountInfo }) {
   const router = useRouter();
   const toast = useToast();
 
@@ -107,6 +135,7 @@ function Home({ userId }: { userId: string }) {
       <HomeView
         banner={
           <div className="space-y-6">
+            <AccountLine account={account} />
             <DailyOracleBanner
               profile={profile}
               onOpenProfileSetup={() => setProfileOpen(true)}
@@ -137,7 +166,7 @@ function Home({ userId }: { userId: string }) {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [userId, setUserId] = useState<string | null>(null);
+  const [account, setAccount] = useState<AccountInfo | null>(null);
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -149,18 +178,22 @@ export default function DashboardPage() {
       .auth.getUser()
       .then(({ data: { user } }) => {
         if (cancelled) return;
-        if (!user) router.replace('/login');
-        else setUserId(user.id);
+        if (!user) {
+          router.replace('/login');
+          return;
+        }
+        const nickname = user.user_metadata?.nickname;
+        setAccount({ id: user.id, email: user.email ?? '', nickname: typeof nickname === 'string' ? nickname : '' });
       });
     return () => {
       cancelled = true;
     };
   }, [router]);
 
-  if (!userId) return <HomeSkeleton />;
+  if (!account) return <HomeSkeleton />;
   return (
     <Suspense fallback={<HomeSkeleton />}>
-      <Home userId={userId} />
+      <Home userId={account.id} account={account} />
     </Suspense>
   );
 }

@@ -9,6 +9,7 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 import ProfileSetupForm from '@/components/dashboard/ProfileSetupForm';
 import { useToast } from '@/components/ui/Toast';
 import DataExportButton from '@/components/settings/DataExportButton';
+import NicknameForm from '@/components/settings/NicknameForm';
 import PasswordForm from '@/components/settings/PasswordForm';
 import DataResetButton from '@/components/settings/DataResetButton';
 
@@ -64,6 +65,15 @@ export default function ProfileSettingsPage() {
         <p className="mt-1 text-sm text-slate-500">생년월일과 MBTI로 매일 나에게 맞는 한마디를 골라 드려요.</p>
       </div>
       {userId ? <ProfileSettings userId={userId} /> : <div className="h-64 animate-pulse rounded-2xl bg-slate-200/70" />}
+
+      {userId && (
+        <section aria-labelledby="nickname-title" className="space-y-4 border-t border-slate-200 pt-6">
+          <h2 id="nickname-title" className="font-serif text-lg font-semibold text-slate-900">
+            별명
+          </h2>
+          <NicknameForm />
+        </section>
+      )}
 
       {userId && (
         <section aria-labelledby="password-title" className="space-y-4 border-t border-slate-200 pt-6">
