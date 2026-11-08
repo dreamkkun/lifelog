@@ -122,6 +122,8 @@ function LoginForm() {
       setError('이메일 또는 비밀번호가 맞지 않아요. 비밀번호를 아직 만들지 않았다면 "이메일 링크"로 로그인한 뒤 설정에서 만들 수 있어요.');
       return;
     }
+    // 비밀번호로 들어왔다면 비밀번호가 있다는 뜻이라, 이전에 만든 계정에도 설정됨 표시를 남긴다 (실패해도 로그인에는 영향 없음)
+    await createClient().auth.updateUser({ data: { has_password: true } }).catch(() => undefined);
     try {
       localStorage.setItem(MODE_KEY, 'password');
     } catch {
