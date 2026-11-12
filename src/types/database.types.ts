@@ -1,4 +1,4 @@
-import type { TodoItem, UserProfile } from '@/types/routine.types';
+import type { TodoItem, TodoTemplate, UserProfile } from '@/types/routine.types';
 
 export type RecordType = 'DIARY' | 'BOOK' | 'LECTURE' | 'MEMO';
 export type Weather = 'SUNNY' | 'CLOUDY' | 'RAINY' | 'SNOWY';
@@ -31,6 +31,7 @@ export type RecordInsertInput = Omit<DatabaseRecord, 'id' | 'user_id' | 'created
 // supabase-js 제네릭 요구사항(Row 가 Record<string, unknown> 에 대입 가능)을 맞추기 위해 매핑 타입 사용
 type Row = { [K in keyof DatabaseRecord]: DatabaseRecord[K] };
 type TodoRow = { [K in keyof TodoItem]: TodoItem[K] };
+type TemplateRow = { [K in keyof TodoTemplate]: TodoTemplate[K] };
 type ProfileRow = {
   user_id: string;
   mbti: UserProfile['mbti'];
@@ -53,6 +54,12 @@ export interface Database {
         Row: TodoRow;
         Insert: Pick<TodoRow, 'content'> & Partial<Omit<TodoRow, 'content'>>;
         Update: Partial<TodoRow>;
+        Relationships: [];
+      };
+      todo_templates: {
+        Row: TemplateRow;
+        Insert: Pick<TemplateRow, 'content' | 'repeat_type'> & Partial<Omit<TemplateRow, 'content' | 'repeat_type'>>;
+        Update: Partial<TemplateRow>;
         Relationships: [];
       };
       user_profiles: {

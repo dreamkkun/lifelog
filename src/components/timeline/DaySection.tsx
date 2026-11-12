@@ -5,13 +5,14 @@ import { format, parseISO } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { Plus } from 'lucide-react';
 import type { DatabaseRecord } from '@/types/database.types';
-import type { TodoItem } from '@/types/routine.types';
+import type { RepeatRule, TodoItem } from '@/types/routine.types';
 import DailyTodoList from '@/components/todo/DailyTodoList';
 import { TimelineEntry } from '@/components/timeline/TimelineEntry';
 import { todayISO } from '@/lib/utils';
 
 export interface TodoActions {
-  addTodo: (date: string, text: string) => Promise<string | null>;
+  addTodo: (date: string, text: string, repeat: RepeatRule | null) => Promise<string | null>;
+  stopRepeat: (todo: TodoItem) => Promise<string | null>;
   toggleTodo: (id: string, done: boolean) => Promise<string | null>;
   updateTodo: (id: string, content: string) => Promise<string | null>;
   removeTodo: (id: string) => Promise<string | null>;
@@ -65,6 +66,7 @@ export function DaySection({
           onAdd={todoActions.addTodo}
           onToggle={todoActions.toggleTodo}
           onUpdate={todoActions.updateTodo}
+          onStopRepeat={todoActions.stopRepeat}
           onRemove={todoActions.removeTodo}
         />
       )}

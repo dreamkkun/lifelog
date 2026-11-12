@@ -25,6 +25,25 @@ export interface TodoItem {
   content: string;
   is_completed: boolean;
   created_at: string;
+  /** 반복 할 일에서 만들어졌으면 그 반복의 id */
+  template_id?: string | null;
+}
+
+/** 0=일 … 6=토 */
+export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+
+/** 새 할 일에 붙이는 반복 설정. null 이면 한 번만 */
+export type RepeatRule = { type: 'DAILY' } | { type: 'WEEKLY'; weekdays: Weekday[] };
+
+export interface TodoTemplate {
+  id: string;
+  user_id: string;
+  content: string;
+  repeat_type: 'DAILY' | 'WEEKLY';
+  weekdays: number[];
+  start_date: string; // YYYY-MM-DD
+  is_active: boolean;
+  created_at: string;
 }
 
 export type QuoteCategory = '전략·통찰' | '성찰·회복' | '원칙·실행' | '도전·모험' | '소통·혁신';

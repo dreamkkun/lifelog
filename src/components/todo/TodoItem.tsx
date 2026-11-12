@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, Pencil, Trash2, X } from 'lucide-react';
+import { Check, Pencil, Repeat, Trash2, X } from 'lucide-react';
 import type { TodoItem as Todo } from '@/types/routine.types';
 import { cn } from '@/lib/utils';
 
@@ -107,6 +107,7 @@ export default function TodoItem({
         >
           {todo.content}
         </span>
+        {todo.template_id && <Repeat className="h-3 w-3 shrink-0 text-slate-500" aria-label="반복 할일" />}
       </button>
       <button
         type="button"
@@ -118,7 +119,7 @@ export default function TodoItem({
       </button>
       <button
         type="button"
-        aria-label={`${todo.content} 삭제`}
+        aria-label={todo.template_id ? `${todo.content} 반복 멈추기` : `${todo.content} 삭제`}
         onClick={() => onRemove(todo)}
         className="relative rounded p-1 text-slate-500 before:absolute before:-inset-2 before:content-[''] transition-opacity hover:text-rose-600 focus:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
       >

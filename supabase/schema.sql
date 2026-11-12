@@ -73,6 +73,22 @@ CREATE TABLE IF NOT EXISTS public.todos (
     created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- 반복 할 일(매일 / 요일별). 앱이 보는 기간마다 날짜별 todos 행을 만들어 넣는다.
+CREATE TABLE IF NOT EXISTS public.todo_templates (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL DEFAULT auth.uid(),
+    content TEXT NOT NULL,
+    repeat_type TEXT NOT NULL CHECK (repeat_type IN ('DAILY', 'WEEKLY')),
+    weekdays SMALLINT[] DEFAULT ARRAY[]::SMALLINT[] NOT NULL, -- 0=일 … 6=토 (WEEKLY 일 때만 사용)
+    start_date DATE DEFAULT CURRENT_DATE NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 반복에서 만들어진 할 일이면 어느 반복인지 기록한다 (같은 날 중복 생성 방지에도 쓴다)
+ALTER TABLE public.todos
+    ADD COLUMN IF NOT EXISTS template_id UUID REFERENCES public.todo_templates(id) ON DELETE SET NULL;
+
 -- ------------------------------------------------------------------------------
 -- 3. 값 제약 (이미 만들어진 테이블에도 최신 규칙이 적용되도록 매번 다시 건다)
 -- ------------------------------------------------------------------------------
@@ -104,6 +120,9 @@ CREATE INDEX IF NOT EXISTS idx_records_user_pinned ON public.records(user_id, is
 CREATE INDEX IF NOT EXISTS idx_records_tags ON public.records USING GIN(tags);
 CREATE INDEX IF NOT EXISTS idx_todos_user_date ON public.todos(user_id, target_date DESC);
 CREATE INDEX IF NOT EXISTS idx_todos_user_completed ON public.todos(user_id, is_completed);
+-- 한 반복은 하루에 한 번만 생성된다. template_id 가 NULL 인 일반 할 일은 제한받지 않는다.
+CREATE UNIQUE INDEX IF NOT EXISTS uq_todos_template_date ON public.todos(template_id, target_date);
+CREATE INDEX IF NOT EXISTS idx_todo_templates_user ON public.todo_templates(user_id, is_active);
 
 -- 아카이브 검색(ilike '%검색어%')용 trigram 인덱스
 CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA extensions;
@@ -133,6 +152,13 @@ ALTER TABLE public.todos ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users can manage their own todos" ON public.todos;
 CREATE POLICY "Users can manage their own todos"
     ON public.todos FOR ALL TO authenticated
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+
+ALTER TABLE public.todo_templates ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can manage their own todo templates" ON public.todo_templates;
+CREATE POLICY "Users can manage their own todo templates"
+    ON public.todo_templates FOR ALL TO authenticated
     USING (auth.uid() = user_id)
     WITH CHECK (auth.uid() = user_id);
 
