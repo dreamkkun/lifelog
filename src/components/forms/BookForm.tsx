@@ -2,8 +2,10 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, Quote } from 'lucide-react';
+import { BookOpen, Camera, ImagePlus, Loader2, Quote, Search } from 'lucide-react';
 import { saveRecord } from '@/lib/records';
+import { useImageOcr } from '@/hooks/useImageOcr';
+import { coverQuery, searchBooks, type BookCandidate } from '@/lib/bookLookup';
 import { useToast } from '@/components/ui/Toast';
 import { cn, todayISO } from '@/lib/utils';
 import type { DatabaseRecord } from '@/types/database.types';
@@ -22,6 +24,12 @@ const fieldClass = (invalid: boolean) =>
     invalid ? 'border-rose-500 focus:ring-rose-200' : 'border-slate-200 focus:ring-indigo-500',
   );
 
+const iconBtn =
+  'flex min-h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50';
+
+const ocrBtn =
+  'inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 hover:bg-slate-50';
+
 export default function BookForm({ userId, defaultDate, onSuccess, initialRecord }: BookFormProps) {
   const isEdit = !!initialRecord;
   const router = useRouter();
@@ -36,6 +44,64 @@ export default function BookForm({ userId, defaultDate, onSuccess, initialRecord
   const [content, setContent] = useState(initialRecord && initialRecord.content !== initialRecord.quote ? initialRecord.content : '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+
+  const { progress, error: ocrError, recognize, isReading } = useImageOcr();
+  const cover = useImageOcr();
+  const [totalPages, setTotalPages] = useState<number | ''>(initialRecord?.book_total_pages ?? '');
+  const [genre, setGenre] = useState(initialRecord?.book_genre ?? '');
+  const [candidates, setCandidates] = useState<BookCandidate[] | null>(null);
+  const [lookupBusy, setLookupBusy] = useState(false);
+  const [lookupMsg, setLookupMsg] = useState<string | null>(null);
+
+  /** 책 정보 후보를 찾아 보여준다. 못 찾으면 표지에서 읽은 가장 긴 줄을 제목 후보로 넣는다. */
+  const findBooks = async (text: string, guessTitle?: string) => {
+    setLookupBusy(true);
+    setLookupMsg(null);
+    setCandidates(null);
+    try {
+      const list = await searchBooks(text);
+      if (list.length > 0) setCandidates(list);
+      else {
+        setLookupMsg('책 정보를 찾지 못했어요. 제목을 확인해서 직접 입력하거나, 제목을 고친 뒤 검색 버튼을 눌러 보세요.');
+        if (guessTitle && !bookTitle.trim()) setBookTitle(guessTitle);
+      }
+    } catch (e) {
+      setLookupMsg(e instanceof Error ? e.message : '책 정보를 찾지 못했어요.');
+    } finally {
+      setLookupBusy(false);
+    }
+  };
+
+  const onCover = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    const raw = await cover.recognize(file, { keepLines: true });
+    if (!raw) return;
+    const { query, guessTitle } = coverQuery(raw);
+    if (!query) return setLookupMsg('표지에서 제목을 읽지 못했어요. 제목이 크게 나오게 다시 찍어 주세요.');
+    await findBooks(query, guessTitle);
+  };
+
+  const pickBook = (c: BookCandidate) => {
+    setBookTitle(c.title);
+    if (c.authors) setBookAuthor(c.authors);
+    if (c.totalPages) setTotalPages(c.totalPages);
+    if (c.genre) setGenre(c.genre);
+    setCandidates(null);
+    toast('책 정보를 채웠어요. 틀린 부분은 고쳐 주세요.');
+  };
+
+  const onPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // 같은 사진을 다시 골라도 동작하도록
+    if (!file) return;
+    const text = await recognize(file);
+    if (!text) return;
+    // 이미 적어 둔 문장이 있으면 지우지 않고 아래에 이어 붙인다
+    setQuote((cur) => (cur.trim() ? `${cur.trim()}\n\n${text}` : text));
+    toast(`${text.length}자를 읽어 넣었어요. 틀린 글자는 고쳐 주세요.`);
+  };
 
   const titleInvalid = submitted && !bookTitle.trim();
   const quoteInvalid = submitted && !quote.trim();
@@ -56,6 +122,11 @@ export default function BookForm({ userId, defaultDate, onSuccess, initialRecord
         book_author: bookAuthor.trim() || null,
         quote: quote.trim(),
         page_number: pageNumber === '' ? null : pageNumber,
+        // 총 페이지·분야 열은 schema.sql 을 다시 실행해야 생기므로, 값이 있거나 이미 있는 기록을 수정할 때만 보낸다
+        ...(totalPages !== '' || (initialRecord && 'book_total_pages' in initialRecord)
+          ? { book_total_pages: totalPages === '' ? null : totalPages }
+          : {}),
+        ...(genre.trim() || (initialRecord && 'book_genre' in initialRecord) ? { book_genre: genre.trim() || null } : {}),
         // content 는 NOT NULL 이므로 감상이 없으면 발췌문으로 대체
         content: content.trim() || quote.trim(),
         image_urls: initialRecord?.image_urls ?? [],
@@ -100,18 +171,82 @@ export default function BookForm({ userId, defaultDate, onSuccess, initialRecord
           <label htmlFor="book-title" className="mb-1 block text-xs font-semibold text-slate-500">
             도서명 *
           </label>
-          <input
-            id="book-title"
-            type="text"
-            placeholder="책 제목 입력"
-            value={bookTitle}
-            onChange={(e) => setBookTitle(e.target.value)}
-            aria-invalid={titleInvalid}
-            className={fieldClass(titleInvalid)}
-          />
+          <div className="flex items-stretch gap-2">
+            <input
+              id="book-title"
+              type="text"
+              placeholder="책 제목 입력"
+              value={bookTitle}
+              onChange={(e) => setBookTitle(e.target.value)}
+              aria-invalid={titleInvalid}
+              className={fieldClass(titleInvalid)}
+            />
+            <label
+              className={iconBtn}
+              title="표지를 찍으면 책 정보를 자동으로 채워요"
+              aria-label="책 표지 촬영으로 정보 채우기"
+            >
+              {cover.isReading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Camera className="h-4 w-4" aria-hidden />}
+              <input type="file" accept="image/*" capture="environment" disabled={cover.isReading || lookupBusy} className="sr-only" onChange={onCover} />
+            </label>
+            <button
+              type="button"
+              onClick={() => findBooks(bookTitle)}
+              disabled={!bookTitle.trim() || lookupBusy || cover.isReading}
+              aria-label="입력한 제목으로 책 정보 찾기"
+              title="입력한 제목으로 책 정보 찾기"
+              className={iconBtn + ' disabled:cursor-not-allowed disabled:opacity-40'}
+            >
+              {lookupBusy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Search className="h-4 w-4" aria-hidden />}
+            </button>
+          </div>
           {titleInvalid && <p className="mt-1 text-xs text-rose-600">도서명을 입력해주세요.</p>}
         </div>
       </div>
+
+      {(cover.isReading || lookupBusy || candidates || lookupMsg || cover.error) && (
+        <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3" aria-live="polite">
+          {cover.isReading && (
+            <p role="status" className="flex items-center gap-2 text-sm text-slate-600">
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> 표지 글자 읽는 중… {cover.progress > 0 ? `${cover.progress}%` : ''}
+            </p>
+          )}
+          {lookupBusy && (
+            <p role="status" className="flex items-center gap-2 text-sm text-slate-600">
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> 책 정보 찾는 중…
+            </p>
+          )}
+          {cover.error && <p role="alert" className="text-xs text-rose-600">{cover.error}</p>}
+          {lookupMsg && <p role="alert" className="text-xs text-rose-600">{lookupMsg}</p>}
+          {candidates && (
+            <>
+              <p className="text-xs font-semibold text-slate-600">이 책이 맞나요? 골라서 채워 보세요.</p>
+              <ul className="space-y-1.5">
+                {candidates.map((c) => (
+                  <li key={c.id}>
+                    <button
+                      type="button"
+                      onClick={() => pickBook(c)}
+                      className="flex min-h-11 w-full items-start gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-left hover:border-slate-400"
+                    >
+                      <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-indigo-500" aria-hidden />
+                      <span className="min-w-0">
+                        <span className="block break-words text-sm font-medium text-slate-900">{c.title}</span>
+                        <span className="block text-xs text-slate-500">
+                          {[c.authors, c.genre, c.totalPages ? `${c.totalPages}쪽` : null].filter(Boolean).join(' · ') || '추가 정보 없음'}
+                        </span>
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <button type="button" onClick={() => setCandidates(null)} className="min-h-11 text-xs font-semibold text-slate-500 underline underline-offset-2">
+                맞는 책이 없어요
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-3">
         <div>
@@ -129,7 +264,7 @@ export default function BookForm({ userId, defaultDate, onSuccess, initialRecord
         </div>
         <div>
           <label htmlFor="book-page" className="mb-1 block text-xs font-semibold text-slate-500">
-            페이지 (선택)
+            발췌 페이지 (선택)
           </label>
           <input
             id="book-page"
@@ -139,6 +274,38 @@ export default function BookForm({ userId, defaultDate, onSuccess, initialRecord
             placeholder="p. 142"
             value={pageNumber}
             onChange={(e) => setPageNumber(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+            className={fieldClass(false)}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label htmlFor="book-genre" className="mb-1 block text-xs font-semibold text-slate-500">
+            분야 (선택)
+          </label>
+          <input
+            id="book-genre"
+            type="text"
+            maxLength={30}
+            placeholder="소설, 경제/경영 …"
+            value={genre}
+            onChange={(e) => setGenre(e.target.value)}
+            className={fieldClass(false)}
+          />
+        </div>
+        <div>
+          <label htmlFor="book-total-pages" className="mb-1 block text-xs font-semibold text-slate-500">
+            총 페이지 (선택)
+          </label>
+          <input
+            id="book-total-pages"
+            type="number"
+            min={1}
+            inputMode="numeric"
+            placeholder="320"
+            value={totalPages}
+            onChange={(e) => setTotalPages(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
             className={fieldClass(false)}
           />
         </div>
@@ -160,6 +327,32 @@ export default function BookForm({ userId, defaultDate, onSuccess, initialRecord
           className={cn(fieldClass(quoteInvalid), 'bg-indigo-50/20 font-serif italic')}
         />
         {quoteInvalid && <p className="mt-1 text-xs text-rose-600">발췌문을 입력해주세요.</p>}
+
+        <div className="mt-2 space-y-1.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <label className={ocrBtn + ' md:hidden'}>
+              <Camera className="h-4 w-4" aria-hidden /> 책 사진 찍기
+              <input type="file" accept="image/*" capture="environment" disabled={isReading} className="sr-only" onChange={onPhoto} />
+            </label>
+            <label className={ocrBtn}>
+              <ImagePlus className="h-4 w-4" aria-hidden /> 사진에서 가져오기
+              <input type="file" accept="image/jpeg,image/png,image/webp" disabled={isReading} className="sr-only" onChange={onPhoto} />
+            </label>
+            {isReading && (
+              <span role="status" className="inline-flex items-center gap-1.5 text-sm text-slate-600">
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> 글자 읽는 중… {progress > 0 ? `${progress}%` : ''}
+              </span>
+            )}
+          </div>
+          {ocrError && (
+            <p role="alert" className="text-xs text-rose-600">
+              {ocrError}
+            </p>
+          )}
+          <p className="text-xs leading-relaxed text-slate-500">
+            책의 문장이 크게 나오게 찍으면 글자를 읽어 위 칸에 넣어요. 읽은 뒤에 틀린 글자를 고치고, 필요 없는 부분은 지워 주세요. 사진은 저장되지 않아요.
+          </p>
+        </div>
       </div>
 
       <div>

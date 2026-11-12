@@ -63,7 +63,17 @@ export function ArchiveItemCard({ item, onDelete }: { item: DatabaseRecord; onDe
           <div className="flex flex-wrap items-baseline gap-x-2">
             <h3 className="font-serif text-lg font-semibold text-slate-900">{item.book_title}</h3>
             <span className="text-xs text-slate-500">
-              {[item.book_author, item.page_number ? `p.${item.page_number}` : null].filter(Boolean).join(' · ')}
+              {[
+                item.book_author,
+                item.book_genre,
+                item.page_number
+                  ? `p.${item.page_number}${item.book_total_pages ? `/${item.book_total_pages}` : ''}`
+                  : item.book_total_pages
+                    ? `총 ${item.book_total_pages}쪽`
+                    : null,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
             </span>
           </div>
         )}

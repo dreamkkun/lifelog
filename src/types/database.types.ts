@@ -14,6 +14,8 @@ export interface DatabaseRecord {
   book_author?: string | null;
   quote?: string | null;
   page_number?: number | null;
+  book_total_pages?: number | null; // 책의 총 페이지 수
+  book_genre?: string | null; // 분야(소설, 경제/경영 …)
   lecture_title?: string | null;
   speaker?: string | null;
   ocr_extracted_text?: string | null;

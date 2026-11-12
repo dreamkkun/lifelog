@@ -34,7 +34,15 @@ export function TimelineEntry({
           : null;
   const sub =
     record.type === 'BOOK'
-      ? [record.book_author, record.page_number ? `p.${record.page_number}` : null]
+      ? [
+          record.book_author,
+          record.book_genre,
+          record.page_number
+            ? `p.${record.page_number}${record.book_total_pages ? `/${record.book_total_pages}` : ''}`
+            : record.book_total_pages
+              ? `총 ${record.book_total_pages}쪽`
+              : null,
+        ]
       : record.type === 'LECTURE'
         ? [record.speaker]
         : [];

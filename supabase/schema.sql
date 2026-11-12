@@ -63,6 +63,11 @@ ALTER TABLE public.records
     ADD COLUMN IF NOT EXISTS tags TEXT[] DEFAULT ARRAY[]::TEXT[],
     ADD COLUMN IF NOT EXISTS memo_title TEXT;
 
+-- 독서 기록의 책 정보(표지 촬영/검색으로 채움): 총 페이지 수와 분야. 이미 만든 테이블에도 추가된다.
+ALTER TABLE public.records
+    ADD COLUMN IF NOT EXISTS book_total_pages INTEGER,
+    ADD COLUMN IF NOT EXISTS book_genre TEXT;
+
 -- 일일 할 일
 CREATE TABLE IF NOT EXISTS public.todos (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
