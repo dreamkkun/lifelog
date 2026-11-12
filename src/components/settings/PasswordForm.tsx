@@ -45,11 +45,17 @@ export default function PasswordForm() {
     const { error: err } = await createClient().auth.updateUser({ password, data: { [PASSWORD_FLAG]: true } });
     setBusy(false);
     if (err) {
-      setError(
-        /different|same/i.test(err.message)
-          ? '지금 쓰는 비밀번호와 다른 비밀번호를 입력해 주세요.'
-          : `비밀번호를 설정하지 못했어요: ${err.message}`,
-      );
+      if (/different|same/i.test(err.message)) {
+        // 새 비밀번호가 현재 비밀번호와 같다는 뜻이므로, 이미 이 비밀번호가 설정돼 있다. 설정됨 표시만 남긴다.
+        await createClient().auth.updateUser({ data: { [PASSWORD_FLAG]: true } }).catch(() => undefined);
+        setPassword('');
+        setConfirm('');
+        setHasPassword(true);
+        setChanging(false);
+        toast('이미 이 비밀번호로 설정되어 있어요.');
+        return;
+      }
+      setError(`비밀번호를 설정하지 못했어요: ${err.message}`);
       return;
     }
     const wasSet = hasPassword;
