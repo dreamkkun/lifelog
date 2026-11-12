@@ -13,6 +13,7 @@ import { ArchiveSearchBar } from '@/components/records/ArchiveSearchBar';
 import { ArchiveItemCard } from '@/components/records/ArchiveItemCard';
 import { useToast } from '@/components/ui/Toast';
 import type { DatabaseRecord } from '@/types/database.types';
+import { newRecordHref, setNewRecordType, typeFromFilter, useNewRecordType } from '@/lib/newRecordType';
 
 const TYPE_PARAMS: Record<string, FilterType> = { diary: 'DIARY', book: 'BOOK', lecture: 'LECTURE', memo: 'MEMO' };
 
@@ -24,6 +25,9 @@ function ArchiveList() {
   const [userId, setUserId] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<FilterType>(TYPE_PARAMS[searchParams.get('type') ?? ''] ?? 'ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const newType = useNewRecordType();
+  // 아카이브에서 고른 종류를 "+" 버튼이 따라가게 한다
+  useEffect(() => setNewRecordType(typeFromFilter(selectedType)), [selectedType]);
   const debouncedQuery = useDebounce(searchQuery, 300);
 
   useEffect(() => {
@@ -112,7 +116,7 @@ function ArchiveList() {
           </div>
         </div>
         <Link
-          href="/new?type=diary"
+          href={newRecordHref(newType)}
           className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition-all hover:bg-slate-800"
         >
           <Plus className="h-4 w-4" aria-hidden /> 새 기록 작성

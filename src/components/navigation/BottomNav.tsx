@@ -4,15 +4,16 @@ import React from 'react';
 import { usePathname } from 'next/navigation';
 import { Calendar, ListFilter, Plus } from 'lucide-react';
 import { NavItem } from './NavItem';
+import { newRecordHref, useNewRecordType } from '@/lib/newRecordType';
 
 const NAV_ITEMS = [
   { label: '캘린더', href: '/', icon: Calendar },
-  { label: '기록 추가', href: '/new?type=diary', icon: Plus, isAction: true },
   { label: '아카이브', href: '/list', icon: ListFilter },
 ];
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const newType = useNewRecordType();
 
   // 로그인/인증 경로에서는 렌더링하지 않음
   if (pathname.startsWith('/login') || pathname.startsWith('/auth')) {
@@ -26,9 +27,9 @@ export default function BottomNav() {
       className="fixed bottom-0 left-0 right-0 z-50 block h-auto min-h-[64px] border-t border-slate-200/80 bg-white/95 pb-safe pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] shadow-[0_-4px_20px_rgba(0,0,0,0.03)] backdrop-blur-md md:hidden"
     >
       <div className="mx-auto grid h-16 max-w-md grid-cols-3 items-center px-4">
-        {NAV_ITEMS.map((item) => (
-          <NavItem key={item.href} {...item} active={pathname === item.href.split('?')[0]} />
-        ))}
+        <NavItem {...NAV_ITEMS[0]} active={pathname === '/'} />
+        <NavItem label="기록 추가" href={newRecordHref(newType)} icon={Plus} isAction active={pathname === '/new'} />
+        <NavItem {...NAV_ITEMS[1]} active={pathname === '/list'} />
       </div>
     </nav>
   );

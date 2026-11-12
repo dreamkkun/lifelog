@@ -9,6 +9,7 @@ import type { RepeatRule, TodoItem } from '@/types/routine.types';
 import DailyTodoList from '@/components/todo/DailyTodoList';
 import { TimelineEntry } from '@/components/timeline/TimelineEntry';
 import { todayISO } from '@/lib/utils';
+import { newRecordHref, useNewRecordType } from '@/lib/newRecordType';
 
 export interface TodoActions {
   addTodo: (date: string, text: string, repeat: RepeatRule | null) => Promise<string | null>;
@@ -38,6 +39,7 @@ export function DaySection({
   onDeleteRecord: (r: DatabaseRecord) => void;
   onTogglePin?: (r: DatabaseRecord) => void;
 }) {
+  const newType = useNewRecordType();
   const d = parseISO(date);
   const isToday = date === todayISO();
   const empty = (!showRecords || records.length === 0) && (!showTodos || todos.length === 0);
@@ -50,7 +52,7 @@ export function DaySection({
         {isToday && <span className="rounded-full bg-slate-900 px-2 py-0.5 text-xs font-semibold text-white">오늘</span>}
         {showRecords && (
           <Link
-            href={`/new?type=diary&date=${date}`}
+            href={newRecordHref(newType, date)}
             className="ml-auto flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-900"
           >
             <Plus className="h-3.5 w-3.5" aria-hidden /> 기록 남기기

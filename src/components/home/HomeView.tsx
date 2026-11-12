@@ -21,6 +21,7 @@ import {
   UserRound,
 } from 'lucide-react';
 import type { DatabaseRecord } from '@/types/database.types';
+import { newRecordHref, setNewRecordType, typeFromFilter, useNewRecordType } from '@/lib/newRecordType';
 import type { TodoItem } from '@/types/routine.types';
 import {
   CategoryFilter,
@@ -72,6 +73,9 @@ export function HomeView({
   const [cursor, setCursor] = useState(() => new Date());
   const [selected, setSelected] = useState(todayISO());
   const [filter, setFilter] = useState<HomeFilter>('ALL');
+  const newType = useNewRecordType();
+  // 고른 종류(독서 등)를 "+" 버튼이 따라가게 한다
+  useEffect(() => setNewRecordType(typeFromFilter(filter)), [filter]);
   const [sheetOpen, setSheetOpen] = useState(false); // 월간 보기의 모바일 바텀시트
 
   const weekStart = useMemo(() => startOfWeek(cursor), [cursor]);
@@ -248,7 +252,7 @@ export function HomeView({
               <ChevronRight className="h-4 w-4" />
             </button>
             <Link
-              href="/new?type=diary"
+              href={newRecordHref(newType)}
               className="hidden items-center gap-1 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 md:inline-flex"
             >
               <Plus className="h-3.5 w-3.5" aria-hidden /> 기록하기
