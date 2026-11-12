@@ -2,6 +2,8 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { Cloud, CloudOff } from 'lucide-react';
+import { useOnline } from '@/hooks/useBackupStatus';
 import { useRouter } from 'next/navigation';
 import { endOfWeek, startOfWeek } from 'date-fns';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
@@ -40,6 +42,23 @@ interface AccountInfo {
 
 /** 지금 로그인한 계정 표시: 별명이 있으면 별명과 이메일, 없으면 별명 정하기 안내 */
 function AccountLine({ account }: { account: AccountInfo }) {
+  const online = useOnline();
+  return (
+    <div className="flex items-baseline justify-between gap-3">
+      <AccountName account={account} />
+      <Link
+        href="/settings/profile"
+        aria-label={online ? '클라우드에 저장 중. 백업 상태 보기' : '오프라인. 백업 상태 보기'}
+        className={`inline-flex shrink-0 items-center gap-1 text-xs font-medium ${online ? 'text-slate-500 hover:text-slate-800' : 'text-amber-700'}`}
+      >
+        {online ? <Cloud className="h-3.5 w-3.5" aria-hidden /> : <CloudOff className="h-3.5 w-3.5" aria-hidden />}
+        {online ? '클라우드 저장' : '오프라인'}
+      </Link>
+    </div>
+  );
+}
+
+function AccountName({ account }: { account: AccountInfo }) {
   return (
     <p className="flex flex-wrap items-baseline gap-x-2 px-1 text-sm text-slate-600">
       {account.nickname ? (

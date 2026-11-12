@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Providers } from '@/components/ui/Providers';
 import BottomNav from '@/components/navigation/BottomNav';
+import LockGate from '@/components/lock/LockGate';
 import PWAInstallPrompt from '@/components/pwa/PWAInstallPrompt';
 import AndroidInstallPrompt from '@/components/pwa/AndroidInstallPrompt';
 import { Noto_Serif_KR } from 'next/font/google';
@@ -63,10 +64,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           {/* iOS 노치/홈 인디케이터 Safe Area 대응 */}
           {/* 모바일: 하단 탭바(4.5rem) + 홈 인디케이터만큼 여백 / md 이상: 탭바 없음 */}
-          <div className="min-h-dvh pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pt-[env(safe-area-inset-top)] md:pb-[env(safe-area-inset-bottom,0px)]">
-            {children}
-          </div>
-          <BottomNav />
+          {/* 앱 잠금이 켜져 있으면 해제 전에는 기록 화면과 하단 탭을 그리지 않는다 */}
+          <LockGate>
+            <div className="min-h-dvh pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pt-[env(safe-area-inset-top)] md:pb-[env(safe-area-inset-bottom,0px)]">
+              {children}
+            </div>
+            <BottomNav />
+          </LockGate>
           {/* 플랫폼별 설치 안내: 환경을 자동 감지하므로 한쪽만 노출된다 */}
           <PWAInstallPrompt /> {/* iOS Safari */}
           <AndroidInstallPrompt /> {/* beforeinstallprompt 지원 브라우저 */}

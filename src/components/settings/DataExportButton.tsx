@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Download, Loader2 } from 'lucide-react';
 import { downloadJson, exportAllData } from '@/lib/backup';
+import { markExported } from '@/hooks/useBackupStatus';
 import { useToast } from '@/components/ui/Toast';
 import { todayISO } from '@/lib/utils';
 
@@ -16,6 +17,7 @@ export default function DataExportButton({ userId }: { userId: string }) {
     try {
       const data = await exportAllData(userId);
       downloadJson(data, `lifelog-backup-${todayISO()}.json`);
+      markExported();
       toast(`기록 ${data.records.length}건, 할일 ${data.todos.length}건을 내려받았어요.`);
     } catch (e) {
       toast(`백업하지 못했어요: ${e instanceof Error ? e.message : '알 수 없는 오류'}`, 'error');

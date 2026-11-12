@@ -9,6 +9,8 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 import ProfileSetupForm from '@/components/dashboard/ProfileSetupForm';
 import { useToast } from '@/components/ui/Toast';
 import DataExportButton from '@/components/settings/DataExportButton';
+import AppLockSettings from '@/components/settings/AppLockSettings';
+import BackupStatus from '@/components/settings/BackupStatus';
 import NicknameForm from '@/components/settings/NicknameForm';
 import PasswordForm from '@/components/settings/PasswordForm';
 import DataResetButton from '@/components/settings/DataResetButton';
@@ -81,6 +83,24 @@ export default function ProfileSettingsPage() {
             로그인 비밀번호
           </h2>
           <PasswordForm />
+        </section>
+      )}
+
+      {userId && (
+        <section aria-labelledby="lock-title" className="space-y-4 border-t border-slate-200 pt-6">
+          <h2 id="lock-title" className="font-serif text-lg font-semibold text-slate-900">
+            앱 잠금
+          </h2>
+          <AppLockSettings />
+        </section>
+      )}
+
+      {userId && (
+        <section aria-labelledby="backup-title" className="space-y-4 border-t border-slate-200 pt-6">
+          <h2 id="backup-title" className="font-serif text-lg font-semibold text-slate-900">
+            클라우드 백업 상태
+          </h2>
+          <BackupStatus userId={userId} />
         </section>
       )}
 
