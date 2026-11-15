@@ -2,11 +2,12 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Pencil, Pin, Trash2 } from 'lucide-react';
+import { EyeOff, Pencil, Pin, Trash2 } from 'lucide-react';
 import type { DatabaseRecord } from '@/types/database.types';
 import { useSignedUrls } from '@/hooks/useStorageUpload';
 import { Modal } from '@/components/ui/Modal';
 import { cn, TYPE_META, WEATHER_META } from '@/lib/utils';
+import { useHideDiary } from '@/lib/diaryPrivacy';
 
 /** 타임라인의 기록 한 건: 왼쪽 유형 배지 + 본문 */
 export function TimelineEntry({
@@ -23,6 +24,10 @@ export function TimelineEntry({
   const urls = useSignedUrls(record.image_urls);
   const [zoom, setZoom] = useState<string | null>(null);
   const weather = record.weather ? WEATHER_META[record.weather] : null;
+  // 일기 내용(글과 사진)은 설정에 따라 가려 두고, 항목을 눌러야 보인다
+  const [hideDiary] = useHideDiary();
+  const [revealed, setRevealed] = useState(false);
+  const covered = record.type === 'DIARY' && hideDiary && !revealed;
 
   const title =
     record.type === 'BOOK'
@@ -107,8 +112,26 @@ export function TimelineEntry({
             &ldquo;{record.quote}&rdquo;
           </blockquote>
         )}
-        {record.content && (
+        {covered && (
+          <button
+            type="button"
+            onClick={() => setRevealed(true)}
+            className="flex min-h-11 w-full items-center gap-2 rounded-xl bg-slate-100 px-3 py-2 text-left text-sm text-slate-600 transition-colors hover:bg-slate-200"
+          >
+            <EyeOff className="h-4 w-4 shrink-0" aria-hidden /> 일기 내용이 가려져 있어요. 눌러서 보기
+          </button>
+        )}
+        {!covered && record.content && (
           <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">{record.content}</p>
+        )}
+        {!covered && record.type === 'DIARY' && hideDiary && (
+          <button
+            type="button"
+            onClick={() => setRevealed(false)}
+            className="min-h-8 text-xs font-semibold text-slate-500 underline underline-offset-2 hover:text-slate-800"
+          >
+            다시 가리기
+          </button>
         )}
         {record.tags && record.tags.length > 0 && (
           <ul className="flex flex-wrap gap-1.5 pt-0.5">
@@ -119,7 +142,7 @@ export function TimelineEntry({
             ))}
           </ul>
         )}
-        {record.image_urls?.length > 0 && (
+        {!covered && record.image_urls?.length > 0 && (
           <ul className="flex gap-2 overflow-x-auto pt-1">
             {record.image_urls.map((p) => (
               <li key={p} className="h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-100">

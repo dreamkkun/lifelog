@@ -16,11 +16,14 @@ import {
 import {
   ChevronLeft,
   ChevronRight,
+  Eye,
+  EyeOff,
   LogOut,
   Plus,
   UserRound,
 } from 'lucide-react';
 import type { DatabaseRecord } from '@/types/database.types';
+import { useHideDiary } from '@/lib/diaryPrivacy';
 import { newRecordHref, setNewRecordType, typeFromFilter, useNewRecordType } from '@/lib/newRecordType';
 import type { TodoItem } from '@/types/routine.types';
 import {
@@ -74,6 +77,7 @@ export function HomeView({
   const [selected, setSelected] = useState(todayISO());
   const [filter, setFilter] = useState<HomeFilter>('ALL');
   const newType = useNewRecordType();
+  const [hideDiary, setHideDiary] = useHideDiary();
   // 고른 종류(독서 등)를 "+" 버튼이 따라가게 한다
   useEffect(() => setNewRecordType(typeFromFilter(filter)), [filter]);
   const [sheetOpen, setSheetOpen] = useState(false); // 월간 보기의 모바일 바텀시트
@@ -257,6 +261,16 @@ export function HomeView({
             >
               <Plus className="h-3.5 w-3.5" aria-hidden /> 기록하기
             </Link>
+            <button
+              type="button"
+              onClick={() => setHideDiary(!hideDiary)}
+              aria-pressed={hideDiary}
+              aria-label={hideDiary ? '일기 내용 보이기' : '일기 내용 가리기'}
+              title={hideDiary ? '일기 내용 보이기' : '일기 내용 가리기'}
+              className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+            >
+              {hideDiary ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
             <Link
               href="/settings/profile"
               aria-label="나의 성향 설정"
