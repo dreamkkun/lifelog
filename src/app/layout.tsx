@@ -18,7 +18,8 @@ const serif = Noto_Serif_KR({
 
 // Next.js 14+ 규격: viewport 는 metadata 와 분리해서 export
 export const viewport: Viewport = {
-  themeColor: '#0f172a',
+  themeColor: '#f8fafc', // 밝은 상태 표시줄 (앱 바탕 slate-50 과 동일)
+  colorScheme: 'light', // 기기·브라우저의 자동 다크 변환(강제 어둡게)을 막는다. 이 앱은 밝은 화면만 지원한다
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,

@@ -18,6 +18,11 @@
   }
 }
 
+/* 밝은 화면 전용: 일부 기기의 "웹페이지 강제 다크"가 색을 뒤집지 않게 한다 */
+html {
+  color-scheme: light;
+}
+
 body {
   font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif;
 }

@@ -9,8 +9,9 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: '/',
     scope: '/',
     display: 'standalone',
-    background_color: '#ffffff',
-    theme_color: '#0f172a', // Slate-900
+    // 앱 바탕(slate-50)과 같은 밝은 색: 설치한 앱의 시작 화면과 상단 상태 표시줄이 어둡게 보이지 않게 한다
+    background_color: '#f8fafc',
+    theme_color: '#f8fafc',
     orientation: 'portrait-primary',
     icons: [
       { src: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },

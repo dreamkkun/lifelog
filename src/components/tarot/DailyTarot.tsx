@@ -49,6 +49,7 @@ export default function DailyTarot({ userId }: { userId: string }) {
 
   const doReveal = async () => {
     setRevealing(true);
+    await new Promise((resolve) => window.setTimeout(resolve, 350)); // 카드가 뒤집히는 시간
     await reveal();
     setRevealing(false);
   };
@@ -78,6 +79,39 @@ export default function DailyTarot({ userId }: { userId: string }) {
     toast('저녁 회고를 오늘 일기에 이어 적었어요.');
   };
 
+  // 안 뽑는 날도 있으니, 뽑기 전에는 한 줄로 조용히 두고 원할 때만 뽑게 한다
+  if (!drawn) {
+    return (
+      <section aria-label="오늘의 타로" className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="shrink-0 [perspective:600px]">
+          <div style={{ transform: revealing ? 'rotateY(90deg)' : 'rotateY(0deg)', transition: 'transform 350ms ease-in' }}>
+            <TarotBack className="w-10 drop-shadow" />
+          </div>
+        </div>
+        <div className="min-w-0 flex-1">
+          <h2 className="flex items-center gap-1.5 text-sm font-semibold text-slate-900">
+            <Sparkles className="h-4 w-4 text-indigo-500" aria-hidden /> 오늘의 타로
+          </h2>
+          <p className="mt-0.5 text-xs leading-relaxed text-slate-500">원하는 날에만 한 장 뽑아 보세요. 안 뽑아도 괜찮아요.</p>
+          {error && (
+            <p role="alert" className="mt-1 text-xs text-rose-600">
+              {error}
+            </p>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={doReveal}
+          disabled={revealing}
+          className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white transition-colors hover:bg-slate-800 disabled:opacity-50"
+        >
+          {revealing ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+          카드 뽑기
+        </button>
+      </section>
+    );
+  }
+
   const inputClass =
     'min-h-11 w-full rounded-xl border border-white/20 bg-white/10 px-3 py-2.5 text-sm text-white placeholder:text-indigo-200/80 focus:border-white/60 focus:outline-none focus:ring-2 focus:ring-white/20';
   const primaryBtn =
@@ -105,20 +139,7 @@ export default function DailyTarot({ userId }: { userId: string }) {
         </p>
       )}
 
-      {!drawn ? (
-        <div className="mt-4 flex flex-col items-center gap-4 sm:flex-row sm:items-center">
-          <TarotBack className="w-28 shrink-0 drop-shadow-lg" />
-          <div className="space-y-3 text-center sm:text-left">
-            <p className="text-sm leading-relaxed text-indigo-100">
-              하루를 시작하기 전에 카드 한 장을 뽑아 보세요. 점을 치는 게 아니라, 오늘을 생각해 볼 질문 하나를 받는 시간이에요.
-            </p>
-            <button type="button" onClick={doReveal} disabled={revealing} className={primaryBtn}>
-              {revealing ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Sparkles className="h-4 w-4" aria-hidden />}
-              오늘의 카드 뽑기
-            </button>
-          </div>
-        </div>
-      ) : (
+      {(
         <div className="mt-4 space-y-5">
           <div className="flex gap-4">
             <TarotArt id={card.id} className="w-24 shrink-0 animate-slide-up drop-shadow-lg motion-reduce:animate-none sm:w-28" />
