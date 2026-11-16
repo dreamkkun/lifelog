@@ -4,6 +4,8 @@ import BottomNav from '@/components/navigation/BottomNav';
 import LockGate from '@/components/lock/LockGate';
 import PWAInstallPrompt from '@/components/pwa/PWAInstallPrompt';
 import AndroidInstallPrompt from '@/components/pwa/AndroidInstallPrompt';
+import InAppBrowserNotice from '@/components/pwa/InAppBrowserNotice';
+import ServiceWorkerRegister from '@/components/pwa/ServiceWorkerRegister';
 import { Noto_Serif_KR } from 'next/font/google';
 import './globals.css';
 
@@ -74,6 +76,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {/* 플랫폼별 설치 안내: 환경을 자동 감지하므로 한쪽만 노출된다 */}
           <PWAInstallPrompt /> {/* iOS Safari */}
           <AndroidInstallPrompt /> {/* beforeinstallprompt 지원 브라우저 */}
+          <InAppBrowserNotice /> {/* 카카오톡 등 앱 안 브라우저: 설치 가능한 브라우저로 안내 */}
+          <ServiceWorkerRegister /> {/* 설치(PWA) 조건 */}
         </Providers>
       </body>
     </html>
