@@ -29,6 +29,20 @@ export interface TodoItem {
   template_id?: string | null;
 }
 
+/** 오늘의 타로 하루치 기록 */
+export interface TarotDay {
+  id: string;
+  user_id: string;
+  target_date: string; // YYYY-MM-DD
+  card_id: number;
+  morning_answer: string | null;
+  mood: 'great' | 'good' | 'okay' | 'low' | 'rough' | null;
+  evening_note: string | null;
+  diary_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 /** 0=일 … 6=토 */
 export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 

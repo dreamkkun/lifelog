@@ -94,6 +94,22 @@ CREATE TABLE IF NOT EXISTS public.todo_templates (
 ALTER TABLE public.todos
     ADD COLUMN IF NOT EXISTS template_id UUID REFERENCES public.todo_templates(id) ON DELETE SET NULL;
 
+-- 오늘의 타로: 하루에 한 장. 아침 질문의 답, 저녁 기분·한 줄 회고, 이어 쓴 일기 연결을 담는다.
+-- 카드 자체는 사용자·날짜로 정해지므로 저장하지 않아도 같지만, 뽑은 카드를 기록으로 남기려고 함께 저장한다.
+CREATE TABLE IF NOT EXISTS public.tarot_days (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL DEFAULT auth.uid(),
+    target_date DATE NOT NULL,
+    card_id SMALLINT NOT NULL CHECK (card_id BETWEEN 0 AND 21),
+    morning_answer TEXT,
+    mood TEXT CHECK (mood IN ('great', 'good', 'okay', 'low', 'rough')),
+    evening_note TEXT,
+    diary_id UUID REFERENCES public.records(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+    UNIQUE (user_id, target_date)
+);
+
 -- ------------------------------------------------------------------------------
 -- 3. 값 제약 (이미 만들어진 테이블에도 최신 규칙이 적용되도록 매번 다시 건다)
 -- ------------------------------------------------------------------------------
@@ -164,6 +180,13 @@ ALTER TABLE public.todo_templates ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users can manage their own todo templates" ON public.todo_templates;
 CREATE POLICY "Users can manage their own todo templates"
     ON public.todo_templates FOR ALL TO authenticated
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+
+ALTER TABLE public.tarot_days ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can manage their own tarot days" ON public.tarot_days;
+CREATE POLICY "Users can manage their own tarot days"
+    ON public.tarot_days FOR ALL TO authenticated
     USING (auth.uid() = user_id)
     WITH CHECK (auth.uid() = user_id);
 

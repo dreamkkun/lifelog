@@ -15,6 +15,7 @@ import DailyOracleBanner from '@/components/dashboard/DailyOracleBanner';
 import ProfileSetupModal from '@/components/dashboard/ProfileSetupModal';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { usePinnedIdeas } from '@/hooks/usePinnedIdeas';
+import DailyTarot from '@/components/tarot/DailyTarot';
 import PinnedIdeasSection from '@/components/dashboard/PinnedIdeasSection';
 import { useToast } from '@/components/ui/Toast';
 import type { DatabaseRecord } from '@/types/database.types';
@@ -160,6 +161,7 @@ function Home({ userId, account }: { userId: string; account: AccountInfo }) {
               profile={profile}
               onOpenProfileSetup={() => setProfileOpen(true)}
             />
+            <DailyTarot userId={userId} />
             <PinnedIdeasSection items={pinned} onUnpin={handleTogglePin} />
           </div>
         }

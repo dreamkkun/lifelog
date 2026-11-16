@@ -1,4 +1,4 @@
-import type { TodoItem, TodoTemplate, UserProfile } from '@/types/routine.types';
+import type { TarotDay, TodoItem, TodoTemplate, UserProfile } from '@/types/routine.types';
 
 export type RecordType = 'DIARY' | 'BOOK' | 'LECTURE' | 'MEMO';
 export type Weather = 'SUNNY' | 'CLOUDY' | 'RAINY' | 'SNOWY';
@@ -34,6 +34,7 @@ export type RecordInsertInput = Omit<DatabaseRecord, 'id' | 'user_id' | 'created
 type Row = { [K in keyof DatabaseRecord]: DatabaseRecord[K] };
 type TodoRow = { [K in keyof TodoItem]: TodoItem[K] };
 type TemplateRow = { [K in keyof TodoTemplate]: TodoTemplate[K] };
+type TarotRow = { [K in keyof TarotDay]: TarotDay[K] };
 type ProfileRow = {
   user_id: string;
   mbti: UserProfile['mbti'];
@@ -62,6 +63,12 @@ export interface Database {
         Row: TemplateRow;
         Insert: Pick<TemplateRow, 'content' | 'repeat_type'> & Partial<Omit<TemplateRow, 'content' | 'repeat_type'>>;
         Update: Partial<TemplateRow>;
+        Relationships: [];
+      };
+      tarot_days: {
+        Row: TarotRow;
+        Insert: Pick<TarotRow, 'target_date' | 'card_id'> & Partial<Omit<TarotRow, 'target_date' | 'card_id'>>;
+        Update: Partial<TarotRow>;
         Relationships: [];
       };
       user_profiles: {

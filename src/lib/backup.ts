@@ -106,10 +106,10 @@ export async function resetAllData(userId: string): Promise<string | null> {
   }
 
   // 3. 행 삭제
-  for (const table of ['records', 'todos', 'todo_templates', 'user_profiles'] as const) {
+  for (const table of ['records', 'todos', 'todo_templates', 'tarot_days', 'user_profiles'] as const) {
     const { error } = await supabase.from(table).delete().eq('user_id', userId);
     // 반복 할 일 테이블은 schema.sql 을 다시 실행하기 전에는 없을 수 있다
-    if (error && table !== 'todo_templates') return error.message;
+    if (error && table !== 'todo_templates' && table !== 'tarot_days') return error.message;
   }
   return null;
 }
