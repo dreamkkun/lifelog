@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { MOODS, moodLabel, type MoodId } from '@/lib/tarot/cards';
-import { pickDailyCard } from '@/lib/tarot/pickCard';
+import { MOODS, TAROT_CARDS, moodLabel, type MoodId } from '@/lib/tarot/cards';
+import { dealSpread } from '@/lib/tarot/pickCard';
 import { todayISO } from '@/lib/utils';
 import type { TarotDay } from '@/types/routine.types';
 
@@ -18,8 +18,11 @@ export const EVENING_START_HOUR = 18;
  */
 export function useTodayTarot(userId: string | null) {
   const date = todayISO();
-  const card = useMemo(() => (userId ? pickDailyCard(userId, date) : null), [userId, date]);
+  // 펼쳐 놓은 카드들(뒷면). 어느 것을 고르느냐에 따라 오늘의 카드가 달라진다.
+  const spread = useMemo(() => (userId ? dealSpread(userId, date, 5) : []), [userId, date]);
   const [day, setDay] = useState<TarotDay | null>(null);
+  // 오늘의 카드: 하나를 고른 뒤에만 정해진다
+  const card = useMemo(() => (day ? TAROT_CARDS.find((c) => c.id === day.card_id) ?? null : null), [day]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,16 +46,25 @@ export function useTodayTarot(userId: string | null) {
     };
   }, [userId, date]);
 
-  /** 카드를 펼친다. 저장에 실패해도(테이블이 아직 없는 경우 등) 화면에서는 펼쳐지고, 답을 저장할 때 안내한다. */
-  const reveal = useCallback(async () => {
-    if (!userId || !card || day) return;
-    const { data } = await createClient()
-      .from('tarot_days')
-      .upsert({ target_date: date, card_id: card.id, updated_at: new Date().toISOString() }, { onConflict: 'user_id,target_date' })
-      .select()
-      .maybeSingle();
-    setDay((data as TarotDay | null) ?? ({ card_id: card.id, target_date: date, morning_answer: null, mood: null, evening_note: null, diary_id: null } as TarotDay));
-  }, [userId, card, day, date]);
+  /**
+   * 펼쳐 놓은 카드 중 하나를 고른다. 하루에 한 번만 정해지고, 다른 기기에서 먼저 골랐다면 그 카드를 따른다.
+   * 저장에 실패해도(테이블이 아직 없는 경우 등) 화면에서는 펼쳐지고, 답을 저장할 때 안내한다.
+   */
+  const reveal = useCallback(
+    async (cardId: number) => {
+      if (!userId || day) return;
+      const supabase = createClient();
+      await supabase
+        .from('tarot_days')
+        .upsert({ target_date: date, card_id: cardId }, { onConflict: 'user_id,target_date', ignoreDuplicates: true });
+      const { data } = await supabase.from('tarot_days').select('*').eq('user_id', userId).eq('target_date', date).maybeSingle();
+      setDay(
+        (data as TarotDay | null) ??
+          ({ card_id: cardId, target_date: date, morning_answer: null, mood: null, evening_note: null, diary_id: null } as TarotDay),
+      );
+    },
+    [userId, day, date],
+  );
 
   /** 일기 한 건을 만들거나 이어 붙이고, 그 id 를 돌려준다. */
   const upsertDiary = useCallback(
@@ -124,5 +136,5 @@ export function useTodayTarot(userId: string | null) {
     [day, upsertDiary, saveDay],
   );
 
-  return { date, card, day, loading, error, reveal, saveMorning, saveEvening, moods: MOODS };
+  return { date, card, spread, day, loading, error, reveal, saveMorning, saveEvening, moods: MOODS };
 }

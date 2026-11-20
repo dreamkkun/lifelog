@@ -1,19 +1,24 @@
 import { fnv1a } from '@/lib/utils/hashSeed';
 import { TAROT_CARDS, type TarotCard } from './cards';
 
-/**
- * 오늘의 카드: 같은 사용자·같은 날짜이면 기기와 상관없이 항상 같은 카드다 (저장 없이 결정된다).
- * 자정에 날짜가 바뀌면 새 카드가 된다. 며칠 연속으로 같은 카드가 나오지 않도록 전날 카드와 겹치면 한 칸 넘긴다.
- */
-export function pickDailyCard(userId: string, dateStr: string): TarotCard {
-  const index = (date: string) => fnv1a(`tarot:${userId}:${date}`) % TAROT_CARDS.length;
-  let i = index(dateStr);
+/** 결정론적 난수 (mulberry32): 같은 시드면 항상 같은 순서 */
+function seededRandom(seed: number) {
+  let a = seed;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
 
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
-  if (m) {
-    const prev = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]) - 1);
-    const prevStr = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}-${String(prev.getDate()).padStart(2, '0')}`;
-    if (index(prevStr) === i) i = (i + 1) % TAROT_CARDS.length;
+/** 오늘 펼쳐 놓을 카드 count 장. 같은 사용자·같은 날이면 기기와 상관없이 같은 순서로 펼쳐지고, 자정에 새로 섞인다. */
+export function dealSpread(userId: string, dateStr: string, count = 5): TarotCard[] {
+  const random = seededRandom(fnv1a(`tarot:${userId}:${dateStr}`));
+  const deck = [...TAROT_CARDS];
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
   }
-  return TAROT_CARDS[i];
+  return deck.slice(0, count);
 }
