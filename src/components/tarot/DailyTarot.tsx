@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Loader2, MoonStar, PenLine, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, MoonStar, PenLine, Sparkles } from 'lucide-react';
 import { EVENING_START_HOUR, useTodayTarot } from '@/hooks/useTodayTarot';
 import { moodLabel, type MoodId } from '@/lib/tarot/cards';
 import { useToast } from '@/components/ui/Toast';
@@ -22,7 +22,8 @@ export default function DailyTarot({ userId }: { userId: string }) {
   const { card, spread, day, loading, error, reveal, saveMorning, saveEvening, moods } = useTodayTarot(userId);
 
   const [revealing, setRevealing] = useState(false);
-  const [picked, setPicked] = useState<number | null>(null); // 펼쳐 놓은 세 장 중 고른 카드
+  const [picked, setPicked] = useState<number | null>(null); // 펼쳐 놓은 카드 중 고른 한 장
+  const scroller = useRef<HTMLDivElement>(null);
   const [answer, setAnswer] = useState('');
   const [mood, setMood] = useState<MoodId | null>(null);
   const [note, setNote] = useState('');
@@ -46,14 +47,18 @@ export default function DailyTarot({ userId }: { userId: string }) {
   const isEvening = hour >= EVENING_START_HOUR;
   const showEveningForm = drawn && !reflected && (isEvening || eveningOpen);
 
-  /** 뒷면 카드 세 장 중 하나를 고르면 뒤집힌다. 어느 카드를 골라도 오늘의 카드가 나온다. */
-  const pickCard = async (index: number) => {
-    if (revealing) return;
-    setPicked(index);
+  /** 고른 카드를 확정하면 뒤집히며 오늘의 카드가 정해진다. */
+  const confirmPick = async () => {
+    if (revealing || picked === null) return;
     setRevealing(true);
     await new Promise((resolve) => window.setTimeout(resolve, 400)); // 고른 카드가 뒤집히는 시간
-    await reveal(spread[index].id);
+    await reveal(spread[picked].id);
     setRevealing(false);
+  };
+
+  const slide = (dir: -1 | 1) => {
+    const el = scroller.current;
+    if (el) el.scrollBy({ left: dir * el.clientWidth * 0.7, behavior: 'smooth' });
   };
 
   const submitMorning = async (goWrite: boolean) => {
@@ -89,50 +94,82 @@ export default function DailyTarot({ userId }: { userId: string }) {
           <Sparkles className="h-4 w-4 text-indigo-500" aria-hidden /> 오늘의 타로
         </h2>
         <p className="mt-1 text-xs leading-relaxed text-slate-500">
-          원하는 날에만 뽑아 보세요. 카드 {spread.length}장 중 마음이 끌리는 한 장을 골라 주세요. 하루에 한 번 정해지고, 안 뽑아도 괜찮아요.
+          원하는 날에만 뽑아 보세요. 카드 {spread.length}장을 좌우로 넘겨 보며 마음이 끌리는 한 장을 고르고 &lsquo;이 카드로 정하기&rsquo;를 눌러 주세요. 하루에 한 번 정해지고, 안 뽑아도 괜찮아요.
         </p>
         {error && (
           <p role="alert" className="mt-2 text-xs text-rose-600">
             {error}
           </p>
         )}
-        <div role="group" aria-label={`카드 ${spread.length}장 중 하나 고르기`} className="mt-4 flex items-end justify-center gap-2 sm:gap-4 [perspective:800px]">
-          {spread.map((_, i) => {
-            const isPicked = picked === i;
-            const mid = (spread.length - 1) / 2;
-            const fanned = i < mid ? '-rotate-3' : i > mid ? 'rotate-3' : '';
-            return (
-              <button
-                key={i}
-                type="button"
-                onClick={() => pickCard(i)}
-                disabled={revealing}
-                aria-label={`${i + 1}번째 카드 고르기`}
-                className={cn(
-                  'rounded-lg transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 motion-reduce:transition-none',
-                  fanned,
-                  i === mid && '-translate-y-2',
-                  revealing && !isPicked ? 'scale-95 opacity-30' : 'hover:-translate-y-2 active:scale-95',
-                )}
-              >
-                <span
-                  className="block"
-                  style={{
-                    transform: isPicked && revealing ? 'rotateY(90deg)' : 'rotateY(0deg)',
-                    transition: 'transform 400ms ease-in',
-                  }}
+        <div className="relative mt-3">
+          <button
+            type="button"
+            onClick={() => slide(-1)}
+            aria-label="왼쪽으로 넘기기"
+            className="absolute left-0 top-1/2 z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow ring-1 ring-slate-200 hover:bg-white"
+          >
+            <ChevronLeft className="h-5 w-5" aria-hidden />
+          </button>
+          <button
+            type="button"
+            onClick={() => slide(1)}
+            aria-label="오른쪽으로 넘기기"
+            className="absolute right-0 top-1/2 z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow ring-1 ring-slate-200 hover:bg-white"
+          >
+            <ChevronRight className="h-5 w-5" aria-hidden />
+          </button>
+          <div
+            ref={scroller}
+            role="group"
+            aria-label={`카드 ${spread.length}장 중 하나 고르기`}
+            className="flex snap-x snap-mandatory items-end gap-2 overflow-x-auto px-[calc(50%-34px)] pb-3 pt-5 [perspective:800px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {spread.map((_, i) => {
+              const isPicked = picked === i;
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => !revealing && setPicked(i)}
+                  disabled={revealing}
+                  aria-pressed={isPicked}
+                  aria-label={`${i + 1}번째 카드 ${isPicked ? '선택됨' : '선택'}`}
+                  className={cn(
+                    'shrink-0 snap-center rounded-lg transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 motion-reduce:transition-none',
+                    isPicked ? '-translate-y-3 ring-2 ring-indigo-400' : 'hover:-translate-y-1',
+                    revealing && !isPicked && 'scale-95 opacity-30',
+                  )}
                 >
-                  <TarotBack className="w-[54px] drop-shadow-md sm:w-20" />
-                </span>
-              </button>
-            );
-          })}
+                  <span
+                    className="block"
+                    style={{
+                      transform: isPicked && revealing ? 'rotateY(90deg)' : 'rotateY(0deg)',
+                      transition: 'transform 400ms ease-in',
+                    }}
+                  >
+                    <TarotBack className="w-[68px] drop-shadow-md" />
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
-        {revealing && (
-          <p role="status" className="mt-3 flex items-center justify-center gap-1.5 text-xs text-slate-500">
-            <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden /> 카드를 펼치는 중…
-          </p>
-        )}
+        <button
+          type="button"
+          onClick={confirmPick}
+          disabled={picked === null || revealing}
+          className="mt-1 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-indigo-950 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-900 disabled:opacity-40"
+        >
+          {revealing ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> 카드를 펼치는 중…
+            </>
+          ) : picked === null ? (
+            '카드를 한 장 골라 주세요'
+          ) : (
+            '이 카드로 정하기'
+          )}
+        </button>
       </section>
     );
   }

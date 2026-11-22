@@ -13,7 +13,7 @@ function seededRandom(seed: number) {
 }
 
 /** 오늘 펼쳐 놓을 카드 count 장. 같은 사용자·같은 날이면 기기와 상관없이 같은 순서로 펼쳐지고, 자정에 새로 섞인다. */
-export function dealSpread(userId: string, dateStr: string, count = 5): TarotCard[] {
+export function dealSpread(userId: string, dateStr: string, count = TAROT_CARDS.length): TarotCard[] {
   const random = seededRandom(fnv1a(`tarot:${userId}:${dateStr}`));
   const deck = [...TAROT_CARDS];
   for (let i = deck.length - 1; i > 0; i--) {

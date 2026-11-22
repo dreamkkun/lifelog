@@ -19,7 +19,7 @@ export const EVENING_START_HOUR = 18;
 export function useTodayTarot(userId: string | null) {
   const date = todayISO();
   // 펼쳐 놓은 카드들(뒷면). 어느 것을 고르느냐에 따라 오늘의 카드가 달라진다.
-  const spread = useMemo(() => (userId ? dealSpread(userId, date, 5) : []), [userId, date]);
+  const spread = useMemo(() => (userId ? dealSpread(userId, date, TAROT_CARDS.length) : []), [userId, date]);
   const [day, setDay] = useState<TarotDay | null>(null);
   // 오늘의 카드: 하나를 고른 뒤에만 정해진다
   const card = useMemo(() => (day ? TAROT_CARDS.find((c) => c.id === day.card_id) ?? null : null), [day]);
