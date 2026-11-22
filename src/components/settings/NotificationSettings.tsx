@@ -84,7 +84,9 @@ export default function NotificationSettings({ userId }: { userId: string }) {
     try {
       const result = await Notification.requestPermission();
       setPermission(result);
-      if (result !== 'granted') throw new Error('알림 권한이 허용되지 않았어요. 기기 설정에서 이 앱의 알림을 허용해 주세요.');
+      // 닫힌 경우(default)와 차단된 경우(denied)는 해결 방법이 달라서 따로 안내한다
+      if (result === 'denied') throw new Error('알림이 차단돼 있어요. 아래 방법으로 허용한 뒤 다시 켜 주세요.');
+      if (result !== 'granted') throw new Error('알림 허용 창에서 선택하지 않았어요. 스위치를 다시 켜고 뜨는 창에서 ‘허용’을 눌러 주세요. 창이 안 뜨면 주소창 오른쪽의 종 모양 아이콘이나 왼쪽 자물쇠에서 알림을 허용해 주세요.');
       const reg = await navigator.serviceWorker.ready;
       const sub =
         (await reg.pushManager.getSubscription()) ??
@@ -221,11 +223,14 @@ export default function NotificationSettings({ userId }: { userId: string }) {
       )}
 
       {permission === 'denied' && (
-        <p role="alert" className="text-xs text-rose-600">
-          알림이 차단돼 있어요. 기기(또는 브라우저) 설정에서 이 앱의 알림을 허용한 뒤 다시 켜 주세요.
-        </p>
+        <div role="alert" className="space-y-1 rounded-xl bg-rose-50 p-3 text-xs leading-relaxed text-rose-700">
+          <p className="font-semibold">알림이 차단돼 있어요.</p>
+          <p>컴퓨터: 주소창 왼쪽 자물쇠(설정) 아이콘 → 알림 → 허용으로 바꾼 뒤 새로고침해 주세요.</p>
+          <p>안드로이드: 설치한 앱 아이콘을 길게 눌러 앱 정보 → 알림을 켜 주세요. 크롬에서는 사이트 설정의 알림을 허용해 주세요.</p>
+          <p>아이폰: 설정 → 알림 → LifeLog에서 알림 허용을 켜 주세요. 홈 화면에 추가한 앱으로 열어야 해요.</p>
+        </div>
       )}
-      {error && (
+      {error && permission !== 'denied' && (
         <p role="alert" className="text-xs text-rose-600">
           {error}
         </p>
