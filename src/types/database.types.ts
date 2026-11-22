@@ -40,6 +40,9 @@ type ProfileRow = {
   mbti: UserProfile['mbti'];
   zodiac_animal: UserProfile['zodiac_animal'];
   star_sign: UserProfile['star_sign'];
+  birth_date?: string | null;
+  birth_is_lunar?: boolean;
+  birth_is_leap?: boolean;
   created_at: string;
   updated_at: string;
 };

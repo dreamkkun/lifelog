@@ -14,7 +14,7 @@ export function useUserProfile(userId: string | null) {
     let cancelled = false;
     createClient()
       .from('user_profiles')
-      .select('user_id, mbti, zodiac_animal, star_sign')
+      .select('*') // 생년월일 열이 아직 없는 DB 에서도 동작하도록 열을 나열하지 않는다
       .eq('user_id', userId)
       .maybeSingle()
       .then(({ data }) => {

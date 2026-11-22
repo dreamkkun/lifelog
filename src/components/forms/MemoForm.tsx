@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Lightbulb, Loader2, Pin, Tag, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
@@ -37,7 +37,13 @@ export default function MemoForm({ userId, defaultDate, onSuccess, initialRecord
   const [tags, setTags] = useState<string[]>(initialRecord?.tags ?? []);
   const [images, setImages] = useState<string[]>([]); // 이번에 새로 올린 사진
   const [keptImages, setKeptImages] = useState<string[]>(initialRecord?.image_urls ?? []); // 수정 시 남겨 둔 기존 사진
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmittingState] = useState(false);
+  // 더블 클릭·느린 네트워크에서 state 갱신 전에 두 번째 제출이 들어오는 것을 동기적으로 막는다
+  const submitLock = useRef(false);
+  const setIsSubmitting = (v: boolean) => {
+    submitLock.current = v;
+    setIsSubmittingState(v);
+  };
   const [submitted, setSubmitted] = useState(false);
 
   const hasImages = keptImages.length + images.length > 0;
@@ -82,7 +88,7 @@ export default function MemoForm({ userId, defaultDate, onSuccess, initialRecord
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return;
+    if (isSubmitting || submitLock.current) return;
     setSubmitted(true);
     const body = content.trim();
     if (!body && !hasImages) return;

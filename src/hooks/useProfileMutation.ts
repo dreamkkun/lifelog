@@ -10,9 +10,15 @@ export function useProfileMutation() {
 
   const saveProfile = useCallback(async (profile: UserProfile): Promise<string | null> => {
     setIsSaving(true);
-    const { error } = await createClient()
-      .from('user_profiles')
-      .upsert({ ...profile, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+    const supabase = createClient();
+    const upsert = (row: UserProfile) =>
+      supabase.from('user_profiles').upsert({ ...row, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+    let { error } = await upsert(profile);
+    // 생년월일 열이 아직 없는 DB(schema.sql 재실행 전)면 그 열만 빼고 다시 저장한다
+    if (error && /birth_|schema cache|does not exist/i.test(error.message)) {
+      const { birth_date: _d, birth_is_lunar: _l, birth_is_leap: _p, ...legacy } = profile;
+      ({ error } = await upsert(legacy));
+    }
     setIsSaving(false);
     return error ? error.message : null;
   }, []);

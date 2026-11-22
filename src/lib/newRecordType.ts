@@ -38,6 +38,39 @@ export function newRecordHref(type: NewRecordType, date?: string) {
   return `/new?type=${type}${date ? `&date=${date}` : ''}`;
 }
 
+// 홈에서 고른 날짜도 같은 방식으로 공유해서, "+" 를 누르면 그 날짜로 기록이 열린다
+const DATE_KEY = 'lifelog:new-record-date';
+const DATE_EVENT = 'lifelog:new-record-date-changed';
+
+export function setNewRecordDate(date: string | null) {
+  try {
+    if (date) sessionStorage.setItem(DATE_KEY, date);
+    else sessionStorage.removeItem(DATE_KEY);
+  } catch {
+    // 저장소를 못 쓰면 오늘 날짜로 열린다
+  }
+  window.dispatchEvent(new Event(DATE_EVENT));
+}
+
+/** 홈에서 고른 날짜 (없으면 undefined → 새 기록은 오늘로 열린다) */
+export function useNewRecordDate(): string | undefined {
+  const [date, setDate] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    const update = () => {
+      try {
+        const v = sessionStorage.getItem(DATE_KEY);
+        setDate(v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : undefined);
+      } catch {
+        setDate(undefined);
+      }
+    };
+    update();
+    window.addEventListener(DATE_EVENT, update);
+    return () => window.removeEventListener(DATE_EVENT, update);
+  }, []);
+  return date;
+}
+
 /** 지금 "+" 가 열어야 할 기록 종류 */
 export function useNewRecordType(): NewRecordType {
   const [type, setType] = useState<NewRecordType>('diary');

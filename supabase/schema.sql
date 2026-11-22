@@ -115,6 +115,11 @@ CREATE TABLE IF NOT EXISTS public.tarot_days (
 -- ------------------------------------------------------------------------------
 ALTER TABLE public.user_profiles ALTER COLUMN mbti SET NOT NULL;
 
+-- 생년월일 보관: 성향 화면을 다시 열어도 입력한 값이 그대로 보이도록 저장한다
+ALTER TABLE public.user_profiles ADD COLUMN IF NOT EXISTS birth_date DATE;
+ALTER TABLE public.user_profiles ADD COLUMN IF NOT EXISTS birth_is_lunar BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE public.user_profiles ADD COLUMN IF NOT EXISTS birth_is_leap BOOLEAN NOT NULL DEFAULT FALSE;
+
 ALTER TABLE public.user_profiles DROP CONSTRAINT IF EXISTS user_profiles_mbti_check;
 ALTER TABLE public.user_profiles ADD CONSTRAINT user_profiles_mbti_check CHECK (
     mbti IN ('ISTJ','ISFJ','INFJ','INTJ','ISTP','ISFP','INFP','INTP',

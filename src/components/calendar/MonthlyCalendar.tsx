@@ -96,15 +96,15 @@ export function MonthlyCalendar({
               aria-pressed={isSelected}
               aria-label={`${iso}${items.length ? `, 기록 ${items.length}건` : ''}${stat ? `, 할일 ${stat.done}/${stat.total}` : ''}`}
               className={cn(
-                'flex h-16 min-w-0 flex-col items-stretch gap-1 p-1.5 text-left transition-colors sm:h-24',
+                'flex h-16 min-w-0 flex-col items-stretch gap-1 overflow-hidden p-1 text-left transition-colors sm:h-24 sm:p-1.5',
                 isSelected ? 'bg-slate-900 text-white' : 'bg-white text-slate-700 hover:bg-slate-50',
                 iso === today && 'ring-2 ring-inset ring-slate-400',
               )}
             >
-              <span className="flex items-center justify-between">
-                <span className="text-xs font-semibold tabular-nums">{i + 1}</span>
+              <span className="flex min-w-0 items-center justify-between gap-1">
+                <span className="shrink-0 text-xs font-semibold tabular-nums">{i + 1}</span>
                 {stat && (
-                  <span className={cn('text-[11px] tabular-nums', isSelected ? 'text-white/70' : 'text-slate-500')}>
+                  <span className={cn('min-w-0 truncate whitespace-nowrap text-[10px] tabular-nums sm:text-[11px]', isSelected ? 'text-white/70' : 'text-slate-500')}>
                     ☑ {stat.done}/{stat.total}
                   </span>
                 )}
@@ -115,17 +115,17 @@ export function MonthlyCalendar({
               ) : (
                 <>
                   {/* 좁은 화면: 유형당 점 1개 */}
-                  <span className="flex gap-1 sm:hidden">
+                  <span className="flex flex-wrap gap-1 overflow-hidden sm:hidden">
                     {types.map((t) => (
                       <span key={t} className={cn('h-1.5 w-1.5 rounded-full', TYPE_META[t].dot)} />
                     ))}
                   </span>
                   {/* 넓은 화면: 기록마다 점 + 한 줄 미리보기 */}
-                  <span className="hidden min-w-0 flex-col gap-0.5 sm:flex">
+                  <span className="hidden min-w-0 flex-col gap-0.5 overflow-hidden sm:flex">
                     {items.slice(0, MAX_SNIPPETS).map((r) => (
                       <span key={r.id} className="flex min-w-0 items-center gap-1">
                         <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', TYPE_META[r.type].dot)} />
-                        <span className={cn('truncate text-[11px] leading-4', isSelected ? 'text-white/80' : 'text-slate-500')}>
+                        <span className={cn('block min-w-0 truncate whitespace-nowrap text-[11px] leading-4', isSelected ? 'text-white/80' : 'text-slate-500')}>
                           {snippet(r)}
                         </span>
                       </span>

@@ -16,6 +16,9 @@ export interface UserProfile {
   mbti: MBTIType;
   zodiac_animal: ZodiacAnimal;
   star_sign: StarSign;
+  birth_date?: string | null; // YYYY-MM-DD (schema.sql 재실행 후 저장)
+  birth_is_lunar?: boolean;
+  birth_is_leap?: boolean;
 }
 
 export interface TodoItem {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { BookOpen, Camera, ImagePlus, Loader2, Quote, Search } from 'lucide-react';
 import { saveRecord } from '@/lib/records';
@@ -42,7 +42,13 @@ export default function BookForm({ userId, defaultDate, onSuccess, initialRecord
   const [pageNumber, setPageNumber] = useState<number | ''>(initialRecord?.page_number ?? '');
   // 감상을 비워 저장하면 content 에 발췌문이 들어가므로, 수정 화면에서는 발췌문과 같은 내용이면 비워 보여준다
   const [content, setContent] = useState(initialRecord && initialRecord.content !== initialRecord.quote ? initialRecord.content : '');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmittingState] = useState(false);
+  // 더블 클릭·느린 네트워크에서 state 갱신 전에 두 번째 제출이 들어오는 것을 동기적으로 막는다
+  const submitLock = useRef(false);
+  const setIsSubmitting = (v: boolean) => {
+    submitLock.current = v;
+    setIsSubmittingState(v);
+  };
   const [submitted, setSubmitted] = useState(false);
 
   const { progress, error: ocrError, recognize, isReading } = useImageOcr();
@@ -108,7 +114,7 @@ export default function BookForm({ userId, defaultDate, onSuccess, initialRecord
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return;
+    if (isSubmitting || submitLock.current) return;
     setSubmitted(true);
     if (!bookTitle.trim() || !quote.trim()) return;
 

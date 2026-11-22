@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import type { DatabaseRecord } from '@/types/database.types';
 import { useHideDiary } from '@/lib/diaryPrivacy';
-import { newRecordHref, setNewRecordType, typeFromFilter, useNewRecordType } from '@/lib/newRecordType';
+import { newRecordHref, setNewRecordDate, setNewRecordType, typeFromFilter, useNewRecordType } from '@/lib/newRecordType';
 import type { TodoItem } from '@/types/routine.types';
 import {
   CategoryFilter,
@@ -80,6 +80,8 @@ export function HomeView({
   const [hideDiary, setHideDiary] = useHideDiary();
   // 고른 종류(독서 등)를 "+" 버튼이 따라가게 한다
   useEffect(() => setNewRecordType(typeFromFilter(filter)), [filter]);
+  // 캘린더에서 고른 날짜로 새 기록이 열리게 한다
+  useEffect(() => setNewRecordDate(selected), [selected]);
   const [sheetOpen, setSheetOpen] = useState(false); // 월간 보기의 모바일 바텀시트
 
   const weekStart = useMemo(() => startOfWeek(cursor), [cursor]);
@@ -256,7 +258,7 @@ export function HomeView({
               <ChevronRight className="h-4 w-4" />
             </button>
             <Link
-              href={newRecordHref(newType)}
+              href={newRecordHref(newType, selected)}
               className="hidden items-center gap-1 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 md:inline-flex"
             >
               <Plus className="h-3.5 w-3.5" aria-hidden /> 기록하기

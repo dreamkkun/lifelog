@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useId, useMemo, useState } from 'react';
+import React, { useEffect, useId, useMemo, useState } from 'react';
 import { Check, Loader2 } from 'lucide-react';
 import { useProfileMutation } from '@/hooks/useProfileMutation';
 import {
@@ -24,10 +24,21 @@ export default function ProfileSetupForm({ userId, initialProfile, onSaved, subm
   const birthId = useId();
   const { saveProfile, isSaving } = useProfileMutation();
 
-  const [birthDate, setBirthDate] = useState('');
-  const [isLunar, setIsLunar] = useState(false);
-  const [isLeapMonth, setIsLeapMonth] = useState(false);
+  const [birthDate, setBirthDate] = useState(initialProfile?.birth_date ?? '');
+  const [isLunar, setIsLunar] = useState(initialProfile?.birth_is_lunar ?? false);
+  const [isLeapMonth, setIsLeapMonth] = useState(initialProfile?.birth_is_leap ?? false);
   const [mbti, setMbti] = useState<MBTIType | null>(initialProfile?.mbti ?? null);
+
+  // 프로필이 폼보다 늦게 도착해도, 아직 아무것도 입력하지 않았다면 저장된 값으로 채운다
+  useEffect(() => {
+    if (!initialProfile) return;
+    if (initialProfile.birth_date) {
+      setBirthDate((cur) => cur || initialProfile.birth_date || '');
+      setIsLunar(initialProfile.birth_is_lunar ?? false);
+      setIsLeapMonth(initialProfile.birth_is_leap ?? false);
+    }
+    setMbti((cur) => cur ?? initialProfile.mbti);
+  }, [initialProfile]);
   const [error, setError] = useState<string | null>(null);
 
   // 생년월일·양력/음력이 바뀔 때마다 즉시 재계산
@@ -47,7 +58,20 @@ export default function ProfileSetupForm({ userId, initialProfile, onSaved, subm
     if (!meta) return setError(computed.error ?? '생년월일을 입력해 주세요.');
 
     setError(null);
-    const profile: UserProfile = { user_id: userId, mbti, zodiac_animal: meta.zodiac, star_sign: meta.starSign };
+    const profile: UserProfile = {
+      user_id: userId,
+      mbti,
+      zodiac_animal: meta.zodiac,
+      star_sign: meta.starSign,
+      // 생년월일을 새로 넣었을 때만 덮어쓰고, 아니면 저장돼 있던 값을 그대로 둔다
+      ...(meta.fromBirth
+        ? { birth_date: birthDate, birth_is_lunar: isLunar, birth_is_leap: isLunar && isLeapMonth }
+        : {
+            birth_date: initialProfile?.birth_date ?? null,
+            birth_is_lunar: initialProfile?.birth_is_lunar ?? false,
+            birth_is_leap: initialProfile?.birth_is_leap ?? false,
+          }),
+    };
     const err = await saveProfile(profile);
     if (err) setError(`프로필을 저장하지 못했어요: ${err}`);
     else onSaved(profile);

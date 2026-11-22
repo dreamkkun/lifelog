@@ -35,7 +35,13 @@ export default function LectureForm({ userId, defaultDate, onSuccess, initialRec
   const [speaker, setSpeaker] = useState(initialRecord?.speaker ?? '');
   const [content, setContent] = useState(initialRecord?.content ?? '');
   const [keptImages, setKeptImages] = useState<string[]>(initialRecord?.image_urls ?? []); // 수정 시 남겨 둔 기존 이미지
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmittingState] = useState(false);
+  // 더블 클릭·느린 네트워크에서 state 갱신 전에 두 번째 제출이 들어오는 것을 동기적으로 막는다
+  const submitLock = useRef(false);
+  const setIsSubmitting = (v: boolean) => {
+    submitLock.current = v;
+    setIsSubmittingState(v);
+  };
   const [submitted, setSubmitted] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [previewLocalUrl, setPreviewLocalUrl] = useState<string | null>(null);
@@ -95,7 +101,7 @@ export default function LectureForm({ userId, defaultDate, onSuccess, initialRec
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting || isProcessing) return;
+    if (isSubmitting || submitLock.current || isProcessing) return;
     setSubmitted(true);
     if (!lectureTitle.trim() || !content.trim()) return;
     // 이미지를 골랐는데 Storage 업로드가 실패했다면 DB 생성을 중단한다.

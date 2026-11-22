@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Cloud, CloudRain, Loader2, Snowflake, Sun } from 'lucide-react';
 import { removeImages, saveRecord } from '@/lib/records';
@@ -35,14 +35,20 @@ export default function DiaryForm({ userId, defaultDate, onSuccess, initialRecor
   const [content, setContent] = useState(initialRecord?.content ?? '');
   const [images, setImages] = useState<string[]>([]); // 이번에 새로 올린 이미지
   const [keptImages, setKeptImages] = useState<string[]>(initialRecord?.image_urls ?? []); // 수정 시 남겨 둔 기존 이미지
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmittingState] = useState(false);
+  // 더블 클릭·느린 네트워크에서 state 갱신 전에 두 번째 제출이 들어오는 것을 동기적으로 막는다
+  const submitLock = useRef(false);
+  const setIsSubmitting = (v: boolean) => {
+    submitLock.current = v;
+    setIsSubmittingState(v);
+  };
   const [submitted, setSubmitted] = useState(false);
 
   const contentInvalid = submitted && !content.trim();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return;
+    if (isSubmitting || submitLock.current) return;
     setSubmitted(true);
     if (!content.trim()) return;
 
