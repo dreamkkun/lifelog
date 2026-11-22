@@ -66,3 +66,14 @@ export function coverQuery(rawText: string): { query: string; guessTitle: string
   const guessTitle = [...lines].sort((a, b) => b.length - a.length)[0] ?? '';
   return { query: lines.slice(0, 4).join(' '), guessTitle };
 }
+
+/** 숫자 13자리(978/979 로 시작) 또는 10자리 ISBN 인지 확인한다. */
+export function isIsbn(value: string): boolean {
+  const v = value.replace(/[-\s]/g, '');
+  return /^(97[89]\d{10}|\d{9}[\dXx])$/.test(v);
+}
+
+/** ISBN 으로 책 후보를 찾는다. 같은 /api/book-search 에서 isbn: 검색을 한다. */
+export function searchByIsbn(isbn: string): Promise<BookCandidate[]> {
+  return searchBooks(`isbn:${isbn.replace(/[-\s]/g, '')}`);
+}

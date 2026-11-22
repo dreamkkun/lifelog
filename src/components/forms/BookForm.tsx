@@ -2,10 +2,11 @@
 
 import React, { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { BookOpen, Camera, ImagePlus, Loader2, Quote, Search } from 'lucide-react';
+import { BookOpen, Camera, ImagePlus, Loader2, Quote, ScanBarcode, Search } from 'lucide-react';
 import { saveRecord } from '@/lib/records';
 import { useImageOcr } from '@/hooks/useImageOcr';
-import { coverQuery, searchBooks, type BookCandidate } from '@/lib/bookLookup';
+import { useBarcodeScan } from '@/hooks/useBarcodeScan';
+import { coverQuery, searchBooks, searchByIsbn, type BookCandidate } from '@/lib/bookLookup';
 import { useToast } from '@/components/ui/Toast';
 import { cn, todayISO } from '@/lib/utils';
 import type { DatabaseRecord } from '@/types/database.types';
@@ -53,6 +54,7 @@ export default function BookForm({ userId, defaultDate, onSuccess, initialRecord
 
   const { progress, error: ocrError, recognize, isReading } = useImageOcr();
   const cover = useImageOcr();
+  const barcode = useBarcodeScan();
   const [totalPages, setTotalPages] = useState<number | ''>(initialRecord?.book_total_pages ?? '');
   const [genre, setGenre] = useState(initialRecord?.book_genre ?? '');
   const [candidates, setCandidates] = useState<BookCandidate[] | null>(null);
@@ -60,12 +62,12 @@ export default function BookForm({ userId, defaultDate, onSuccess, initialRecord
   const [lookupMsg, setLookupMsg] = useState<string | null>(null);
 
   /** 책 정보 후보를 찾아 보여준다. 못 찾으면 표지에서 읽은 가장 긴 줄을 제목 후보로 넣는다. */
-  const findBooks = async (text: string, guessTitle?: string) => {
+  const findBooks = async (text: string, guessTitle?: string, isbn?: string) => {
     setLookupBusy(true);
     setLookupMsg(null);
     setCandidates(null);
     try {
-      const list = await searchBooks(text);
+      const list = isbn ? await searchByIsbn(isbn) : await searchBooks(text);
       if (list.length > 0) setCandidates(list);
       else {
         setLookupMsg('책 정보를 찾지 못했어요. 제목을 확인해서 직접 입력하거나, 제목을 고친 뒤 검색 버튼을 눌러 보세요.');
@@ -87,6 +89,16 @@ export default function BookForm({ userId, defaultDate, onSuccess, initialRecord
     const { query, guessTitle } = coverQuery(raw);
     if (!query) return setLookupMsg('표지에서 제목을 읽지 못했어요. 제목이 크게 나오게 다시 찍어 주세요.');
     await findBooks(query, guessTitle);
+  };
+
+  const onBarcode = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    const isbn = await barcode.scan(file);
+    if (!isbn) return;
+    setLookupMsg(null);
+    await findBooks('', undefined, isbn);
   };
 
   const pickBook = (c: BookCandidate) => {
@@ -193,7 +205,15 @@ export default function BookForm({ userId, defaultDate, onSuccess, initialRecord
               aria-label="책 표지 촬영으로 정보 채우기"
             >
               {cover.isReading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Camera className="h-4 w-4" aria-hidden />}
-              <input type="file" accept="image/*" capture="environment" disabled={cover.isReading || lookupBusy} className="sr-only" onChange={onCover} />
+              <input type="file" accept="image/*" capture="environment" disabled={cover.isReading || barcode.isScanning || lookupBusy} className="sr-only" onChange={onCover} />
+            </label>
+            <label
+              className={iconBtn}
+              title="책 뒷면 바코드를 찍으면 책 정보를 자동으로 채워요"
+              aria-label="바코드 촬영으로 정보 채우기"
+            >
+              {barcode.isScanning ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <ScanBarcode className="h-4 w-4" aria-hidden />}
+              <input type="file" accept="image/*" capture="environment" disabled={barcode.isScanning || cover.isReading || lookupBusy} className="sr-only" onChange={onBarcode} />
             </label>
             <button
               type="button"
@@ -210,7 +230,7 @@ export default function BookForm({ userId, defaultDate, onSuccess, initialRecord
         </div>
       </div>
 
-      {(cover.isReading || lookupBusy || candidates || lookupMsg || cover.error) && (
+      {(cover.isReading || barcode.isScanning || lookupBusy || candidates || lookupMsg || cover.error || barcode.error) && (
         <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3" aria-live="polite">
           {cover.isReading && (
             <p role="status" className="flex items-center gap-2 text-sm text-slate-600">
@@ -222,6 +242,12 @@ export default function BookForm({ userId, defaultDate, onSuccess, initialRecord
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> 책 정보 찾는 중…
             </p>
           )}
+          {barcode.isScanning && (
+            <p role="status" className="flex items-center gap-2 text-sm text-slate-600">
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> 바코드 읽는 중…
+            </p>
+          )}
+          {barcode.error && <p role="alert" className="text-xs text-rose-600">{barcode.error}</p>}
           {cover.error && <p role="alert" className="text-xs text-rose-600">{cover.error}</p>}
           {lookupMsg && <p role="alert" className="text-xs text-rose-600">{lookupMsg}</p>}
           {candidates && (
