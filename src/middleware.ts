@@ -14,9 +14,10 @@ export const config = {
      * - _next/image (이미지 최적화 파일)
      * - favicon.ico
      * - manifest.webmanifest, sw.js (PWA: 비로그인 상태에서도 설치 가능해야 함)
+     * - api/push/send (예약 발송: 로그인 세션이 없고 CRON_SECRET 으로 확인한다)
      * - opengraph-image / twitter-image (카카오톡 등 링크 미리보기 크롤러는 로그인할 수 없다)
      * - 정적 미디어 확장자 (svg, png, jpg, jpeg, gif, webp)
      */
-    '/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|opengraph-image|twitter-image|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|api/push/send|opengraph-image|twitter-image|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

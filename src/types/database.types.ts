@@ -1,4 +1,4 @@
-import type { TarotDay, TodoItem, TodoTemplate, UserProfile } from '@/types/routine.types';
+import type { NotificationSettings, PushSubscriptionRow, TarotDay, TodoItem, TodoTemplate, UserProfile } from '@/types/routine.types';
 
 export type RecordType = 'DIARY' | 'BOOK' | 'LECTURE' | 'MEMO';
 export type Weather = 'SUNNY' | 'CLOUDY' | 'RAINY' | 'SNOWY';
@@ -35,6 +35,8 @@ type Row = { [K in keyof DatabaseRecord]: DatabaseRecord[K] };
 type TodoRow = { [K in keyof TodoItem]: TodoItem[K] };
 type TemplateRow = { [K in keyof TodoTemplate]: TodoTemplate[K] };
 type TarotRow = { [K in keyof TarotDay]: TarotDay[K] };
+type NotifRow = { [K in keyof NotificationSettings]: NotificationSettings[K] };
+type PushSubRow = { [K in keyof PushSubscriptionRow]: PushSubscriptionRow[K] };
 type ProfileRow = {
   user_id: string;
   mbti: UserProfile['mbti'];
@@ -72,6 +74,18 @@ export interface Database {
         Row: TarotRow;
         Insert: Pick<TarotRow, 'target_date' | 'card_id'> & Partial<Omit<TarotRow, 'target_date' | 'card_id'>>;
         Update: Partial<TarotRow>;
+        Relationships: [];
+      };
+      notification_settings: {
+        Row: NotifRow;
+        Insert: Pick<NotifRow, 'user_id'> & Partial<Omit<NotifRow, 'user_id'>>;
+        Update: Partial<NotifRow>;
+        Relationships: [];
+      };
+      push_subscriptions: {
+        Row: PushSubRow;
+        Insert: Pick<PushSubRow, 'endpoint' | 'p256dh' | 'auth'> & Partial<Omit<PushSubRow, 'endpoint' | 'p256dh' | 'auth'>>;
+        Update: Partial<PushSubRow>;
         Relationships: [];
       };
       user_profiles: {

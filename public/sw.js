@@ -19,3 +19,39 @@ self.addEventListener('fetch', (event) => {
     ),
   );
 });
+
+// 푸시 알림: 서버가 보낸 { title, body, url, tag } 를 보여 준다.
+self.addEventListener('push', (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = {};
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'LifeLog', {
+      body: data.body || '',
+      icon: '/apple-touch-icon.png',
+      badge: '/apple-touch-icon.png',
+      tag: data.tag || 'lifelog',
+      data: { url: data.url || '/' },
+    }),
+  );
+});
+
+// 알림을 누르면 열려 있는 창으로 이동하거나, 없으면 새로 열어 바로 기록 화면으로 간다.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || '/';
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      for (const client of list) {
+        if ('focus' in client) {
+          if ('navigate' in client) client.navigate(url);
+          return client.focus();
+        }
+      }
+      return self.clients.openWindow(url);
+    }),
+  );
+});

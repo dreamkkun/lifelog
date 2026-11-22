@@ -10,6 +10,7 @@
     "type-check": "tsc --noEmit",
     "verify": "npm run type-check && npm run lint && npm run build",
     "icons": "node scripts/generate-icons.js",
+    "vapid": "node scripts/generate-vapid.js",
     "prepare": "husky"
   },
   "dependencies": {
@@ -22,12 +23,14 @@
     "next": "14.2.35",
     "react": "^18",
     "react-dom": "^18",
-    "tesseract.js": "^7.0.0"
+    "tesseract.js": "^7.0.0",
+    "web-push": "^4.0.0"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/web-push": "^3.6.4",
     "eslint": "^8",
     "eslint-config-next": "14.2.35",
     "husky": "^9.1.7",

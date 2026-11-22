@@ -195,6 +195,43 @@ CREATE POLICY "Users can manage their own tarot days"
     USING (auth.uid() = user_id)
     WITH CHECK (auth.uid() = user_id);
 
+-- 알림(푸시): 기기별 구독과 사용자별 알림 설정
+-- evening_enabled 가 FALSE 면 사용자가 명시적으로 끈 것이고, evening_time 이 NULL 이면 시간을 정하지 않은 것(기본 21:00).
+CREATE TABLE IF NOT EXISTS public.push_subscriptions (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL DEFAULT auth.uid(),
+    endpoint TEXT NOT NULL UNIQUE,
+    p256dh TEXT NOT NULL,
+    auth TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user ON public.push_subscriptions(user_id);
+
+CREATE TABLE IF NOT EXISTS public.notification_settings (
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY DEFAULT auth.uid(),
+    evening_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    evening_time TEXT CHECK (evening_time IS NULL OR evening_time ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$'),
+    time_zone TEXT NOT NULL DEFAULT 'Asia/Seoul',
+    last_sent_date DATE,
+    ignored_streak INTEGER NOT NULL DEFAULT 0,
+    first_notice_sent BOOLEAN NOT NULL DEFAULT FALSE,
+    updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can manage their own push subscriptions" ON public.push_subscriptions;
+CREATE POLICY "Users can manage their own push subscriptions"
+    ON public.push_subscriptions FOR ALL TO authenticated
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+
+ALTER TABLE public.notification_settings ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can manage their own notification settings" ON public.notification_settings;
+CREATE POLICY "Users can manage their own notification settings"
+    ON public.notification_settings FOR ALL TO authenticated
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+
 -- ------------------------------------------------------------------------------
 -- 6. Storage: 비공개 이미지 버킷 + 내 폴더({user_id}/…)만 접근
 -- ------------------------------------------------------------------------------

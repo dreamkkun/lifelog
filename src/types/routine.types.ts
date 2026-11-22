@@ -73,3 +73,24 @@ export interface QuoteData {
   keywords: readonly string[];
   category: QuoteCategory;
 }
+
+/** 알림 설정. evening_enabled=false 는 사용자가 명시적으로 끈 것, evening_time=null 은 시간 미설정(기본 21:00). */
+export interface NotificationSettings {
+  user_id: string;
+  evening_enabled: boolean;
+  evening_time: string | null; // 'HH:MM'
+  time_zone: string;
+  last_sent_date: string | null; // YYYY-MM-DD
+  ignored_streak: number;
+  first_notice_sent: boolean;
+  updated_at: string;
+}
+
+export interface PushSubscriptionRow {
+  id: string;
+  user_id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  created_at: string;
+}

@@ -10,6 +10,7 @@ import ProfileSetupForm from '@/components/dashboard/ProfileSetupForm';
 import { useToast } from '@/components/ui/Toast';
 import DataExportButton from '@/components/settings/DataExportButton';
 import AppLockSettings from '@/components/settings/AppLockSettings';
+import NotificationSettings from '@/components/settings/NotificationSettings';
 import BackupStatus from '@/components/settings/BackupStatus';
 import NicknameForm from '@/components/settings/NicknameForm';
 import PasswordForm from '@/components/settings/PasswordForm';
@@ -83,6 +84,15 @@ export default function ProfileSettingsPage() {
             로그인 비밀번호
           </h2>
           <PasswordForm />
+        </section>
+      )}
+
+      {userId && (
+        <section id="notifications" aria-labelledby="notif-title" className="space-y-4 border-t border-slate-200 pt-6">
+          <h2 id="notif-title" className="font-serif text-lg font-semibold text-slate-900">
+            알림
+          </h2>
+          <NotificationSettings userId={userId} />
         </section>
       )}
 
