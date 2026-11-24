@@ -32,8 +32,11 @@ export function daysBetween(fromDate: string, toDate: string): number {
   return Math.round((Date.parse(`${toDate}T00:00:00Z`) - Date.parse(`${fromDate}T00:00:00Z`)) / 86_400_000);
 }
 
-/** 지금이 이 사용자의 발송 구간(정해진 시각 ~ +SEND_WINDOW_MIN)인지. */
-export function inSendWindow(minutes: number, target: string): boolean {
+/** 영양제 알림은 제때 와야 의미가 있어서 구간을 더 좁게 잡는다. */
+export const SUPPLEMENT_WINDOW_MIN = 45;
+
+/** 지금이 발송 구간(정해진 시각 ~ +width분)인지. */
+export function inSendWindow(minutes: number, target: string, width: number = SEND_WINDOW_MIN): boolean {
   const start = toMinutes(target);
-  return minutes >= start && minutes < start + SEND_WINDOW_MIN;
+  return minutes >= start && minutes < start + width;
 }

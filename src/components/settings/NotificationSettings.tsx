@@ -113,7 +113,9 @@ export default function NotificationSettings({ userId }: { userId: string }) {
     try {
       const reg = await navigator.serviceWorker.ready;
       const sub = await reg.pushManager.getSubscription();
-      if (sub) {
+      // 영양제 알림을 쓰고 있으면 이 기기의 구독은 남겨 둔다(저녁 리마인드만 끈다)
+      const { count: supplementReminders } = await createClient().from('supplements').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('remind', true).eq('is_active', true);
+      if (sub && !(supplementReminders && supplementReminders > 0)) {
         await createClient().from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
         await sub.unsubscribe();
       }

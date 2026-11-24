@@ -96,3 +96,27 @@ export interface PushSubscriptionRow {
   auth: string;
   created_at: string;
 }
+
+/** 복용 중인 영양제. remind 가 true 면 remind_time(HH:MM)에 아직 안 먹었을 때 알려 준다. */
+export interface Supplement {
+  id: string;
+  user_id: string;
+  name: string;
+  catalog_key: string | null;
+  dose: string | null;
+  remind: boolean;
+  remind_time: string;
+  time_zone: string;
+  start_date: string; // YYYY-MM-DD
+  is_active: boolean;
+  last_notified_date: string | null;
+  created_at: string;
+}
+
+export interface SupplementLog {
+  id: string;
+  user_id: string;
+  supplement_id: string;
+  target_date: string; // YYYY-MM-DD
+  taken_at: string;
+}

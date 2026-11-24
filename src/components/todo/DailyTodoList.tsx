@@ -41,6 +41,9 @@ export default function DailyTodoList({ date, todos, isToday, onAdd, onToggle, o
         <Link href="/habits" className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100">
           습관
         </Link>
+        <Link href="/supplements" className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100">
+          영양제
+        </Link>
         {todos.length > 0 && (
           <>
             <span className="text-xs tabular-nums text-slate-500">

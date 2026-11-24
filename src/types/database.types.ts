@@ -1,4 +1,4 @@
-import type { NotificationSettings, PushSubscriptionRow, TarotDay, TodoItem, TodoTemplate, UserProfile } from '@/types/routine.types';
+import type { NotificationSettings, PushSubscriptionRow, Supplement, SupplementLog, TarotDay, TodoItem, TodoTemplate, UserProfile } from '@/types/routine.types';
 
 export type RecordType = 'DIARY' | 'BOOK' | 'LECTURE' | 'MEMO';
 export type Weather = 'SUNNY' | 'CLOUDY' | 'RAINY' | 'SNOWY';
@@ -37,6 +37,8 @@ type TemplateRow = { [K in keyof TodoTemplate]: TodoTemplate[K] };
 type TarotRow = { [K in keyof TarotDay]: TarotDay[K] };
 type NotifRow = { [K in keyof NotificationSettings]: NotificationSettings[K] };
 type PushSubRow = { [K in keyof PushSubscriptionRow]: PushSubscriptionRow[K] };
+type SuppRow = { [K in keyof Supplement]: Supplement[K] };
+type SuppLogRow = { [K in keyof SupplementLog]: SupplementLog[K] };
 type ProfileRow = {
   user_id: string;
   mbti: UserProfile['mbti'];
@@ -86,6 +88,18 @@ export interface Database {
         Row: PushSubRow;
         Insert: Pick<PushSubRow, 'endpoint' | 'p256dh' | 'auth'> & Partial<Omit<PushSubRow, 'endpoint' | 'p256dh' | 'auth'>>;
         Update: Partial<PushSubRow>;
+        Relationships: [];
+      };
+      supplements: {
+        Row: SuppRow;
+        Insert: Pick<SuppRow, 'name'> & Partial<Omit<SuppRow, 'name'>>;
+        Update: Partial<SuppRow>;
+        Relationships: [];
+      };
+      supplement_logs: {
+        Row: SuppLogRow;
+        Insert: Pick<SuppLogRow, 'supplement_id' | 'target_date'> & Partial<Omit<SuppLogRow, 'supplement_id' | 'target_date'>>;
+        Update: Partial<SuppLogRow>;
         Relationships: [];
       };
       user_profiles: {

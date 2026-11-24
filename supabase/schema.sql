@@ -236,6 +236,48 @@ CREATE POLICY "Users can manage their own notification settings"
     USING (auth.uid() = user_id)
     WITH CHECK (auth.uid() = user_id);
 
+-- 영양제: 내가 복용 중인 영양제 목록과 매일 먹었다는 체크.
+-- remind_time 은 알림 시각(HH:MM), remind 가 TRUE 면 그 시각에 아직 안 먹었을 때 알려 준다. last_notified_date 는 하루 1회 발송 기록.
+CREATE TABLE IF NOT EXISTS public.supplements (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL DEFAULT auth.uid(),
+    name TEXT NOT NULL,
+    catalog_key TEXT,
+    dose TEXT,
+    remind BOOLEAN NOT NULL DEFAULT TRUE,
+    remind_time TEXT NOT NULL DEFAULT '08:30' CHECK (remind_time ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$'),
+    time_zone TEXT NOT NULL DEFAULT 'Asia/Seoul',
+    start_date DATE DEFAULT CURRENT_DATE NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    last_notified_date DATE,
+    created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_supplements_user ON public.supplements(user_id, is_active);
+
+CREATE TABLE IF NOT EXISTS public.supplement_logs (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL DEFAULT auth.uid(),
+    supplement_id UUID REFERENCES public.supplements(id) ON DELETE CASCADE NOT NULL,
+    target_date DATE NOT NULL,
+    taken_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+    UNIQUE (supplement_id, target_date)
+);
+CREATE INDEX IF NOT EXISTS idx_supplement_logs_user_date ON public.supplement_logs(user_id, target_date DESC);
+
+ALTER TABLE public.supplements ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can manage their own supplements" ON public.supplements;
+CREATE POLICY "Users can manage their own supplements"
+    ON public.supplements FOR ALL TO authenticated
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+
+ALTER TABLE public.supplement_logs ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can manage their own supplement logs" ON public.supplement_logs;
+CREATE POLICY "Users can manage their own supplement logs"
+    ON public.supplement_logs FOR ALL TO authenticated
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+
 -- ------------------------------------------------------------------------------
 -- 6. Storage: 비공개 이미지 버킷 + 내 폴더({user_id}/…)만 접근
 -- ------------------------------------------------------------------------------

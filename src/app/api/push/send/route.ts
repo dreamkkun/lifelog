@@ -7,6 +7,7 @@ import {
   DEFAULT_EVENING_TIME,
   IGNORED_LIMIT,
   RETURN_GAP_DAYS,
+  SUPPLEMENT_WINDOW_MIN,
   daysBetween,
   inSendWindow,
   isValidTime,
@@ -40,6 +41,58 @@ function pickMessage(opts: { returning: boolean; cardName: string | null; firstN
   // 시간을 정하지 않은 사용자에게 처음 한 번만 변경 방법을 알려 준다
   if (opts.firstNotice) body += ' 매일 밤 9시에 알려드렸어요. 원하는 시간은 설정에서 바꿀 수 있어요.';
   return { title: 'LifeLog', body };
+}
+
+type Admin = NonNullable<ReturnType<typeof createAdminClient>>;
+
+/** 사용자의 모든 기기로 보낸다. 만료된 구독은 지우고, 한 곳이라도 성공하면 true. */
+async function deliver(admin: Admin, userId: string, payload: string, result: { removed: number }): Promise<boolean> {
+  const { data: subs } = await admin.from('push_subscriptions').select('*').eq('user_id', userId);
+  let delivered = 0;
+  for (const sub of subs ?? []) {
+    try {
+      await webpush.sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } }, payload, { TTL: 60 * 30 });
+      delivered++;
+    } catch (e) {
+      const status = (e as { statusCode?: number }).statusCode;
+      if (status === 404 || status === 410) {
+        await admin.from('push_subscriptions').delete().eq('id', sub.id);
+        result.removed++;
+      }
+    }
+  }
+  return delivered > 0;
+}
+
+/** 영양제: 정해 둔 시각에 아직 안 먹었으면, 사용자별로 한 번에 묶어 알린다. 영양제마다 하루 1회. */
+async function sendSupplementReminders(admin: Admin, result: { sent: number; skipped: number; removed: number }) {
+  const { data: supps, error } = await admin.from('supplements').select('*').eq('is_active', true).eq('remind', true);
+  if (error || !supps) return; // 테이블이 아직 없으면 조용히 건너뛴다
+  const due = new Map<string, { id: string; name: string; date: string }[]>();
+  for (const s of supps) {
+    const now = localNow(s.time_zone);
+    if (!inSendWindow(now.minutes, s.remind_time, SUPPLEMENT_WINDOW_MIN) || s.last_notified_date === now.date) continue;
+    const { count } = await admin
+      .from('supplement_logs')
+      .select('id', { count: 'exact', head: true })
+      .eq('supplement_id', s.id)
+      .eq('target_date', now.date);
+    if ((count ?? 0) > 0) {
+      result.skipped++; // 이미 먹었으면 알리지 않는다
+      continue;
+    }
+    const list = due.get(s.user_id) ?? [];
+    list.push({ id: s.id, name: s.name, date: now.date });
+    due.set(s.user_id, list);
+  }
+  for (const [userId, items] of Array.from(due.entries())) {
+    const names = items.length > 3 ? `${items.slice(0, 3).map((i) => i.name).join(', ')} 외 ${items.length - 3}개` : items.map((i) => i.name).join(', ');
+    const payload = JSON.stringify({ title: '영양제 먹을 시간', body: `${names} 챙겨 드세요.`, url: '/supplements', tag: `supplement-${items[0].date}` });
+    if (await deliver(admin, userId, payload, result)) {
+      for (const i of items) await admin.from('supplements').update({ last_notified_date: i.date }).eq('id', i.id);
+      result.sent++;
+    }
+  }
 }
 
 async function run(request: Request) {
@@ -124,6 +177,8 @@ async function run(request: Request) {
       result.sent++;
     }
   }
+
+  await sendSupplementReminders(admin, result);
 
   return NextResponse.json(result);
 }
