@@ -112,10 +112,12 @@ function Home({ userId, account }: { userId: string; account: AccountInfo }) {
     updateTodo,
     removeTodo,
     stopRepeat,
+    skipOnce,
+    makeRepeat,
   } = useRangeTodos(userId, range.start, range.end);
   const todoActions = useMemo(
-    () => ({ addTodo, toggleTodo, updateTodo, removeTodo, stopRepeat }),
-    [addTodo, toggleTodo, updateTodo, removeTodo, stopRepeat],
+    () => ({ addTodo, toggleTodo, updateTodo, removeTodo, stopRepeat, skipOnce, makeRepeat }),
+    [addTodo, toggleTodo, updateTodo, removeTodo, stopRepeat, skipOnce, makeRepeat],
   );
 
   const handleDelete = useCallback(

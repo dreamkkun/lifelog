@@ -59,6 +59,8 @@ export interface TodoTemplate {
   repeat_type: 'DAILY' | 'WEEKLY';
   weekdays: number[];
   start_date: string; // YYYY-MM-DD
+  /** "이 날만 삭제"한 날짜들 (schema.sql 재실행 후 저장) */
+  skipped_dates?: string[];
   is_active: boolean;
   created_at: string;
 }

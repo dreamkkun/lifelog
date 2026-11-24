@@ -90,6 +90,10 @@ CREATE TABLE IF NOT EXISTS public.todo_templates (
     created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- 반복 중 "이 날만 삭제"한 날짜. 이 날짜에는 반복이 할 일을 다시 만들지 않고, 습관 통계에서도 빼고 센다.
+ALTER TABLE public.todo_templates
+    ADD COLUMN IF NOT EXISTS skipped_dates DATE[] NOT NULL DEFAULT ARRAY[]::DATE[];
+
 -- 반복에서 만들어진 할 일이면 어느 반복인지 기록한다 (같은 날 중복 생성 방지에도 쓴다)
 ALTER TABLE public.todos
     ADD COLUMN IF NOT EXISTS template_id UUID REFERENCES public.todo_templates(id) ON DELETE SET NULL;

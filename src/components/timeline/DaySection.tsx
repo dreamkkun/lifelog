@@ -14,6 +14,8 @@ import { newRecordHref, useNewRecordType } from '@/lib/newRecordType';
 export interface TodoActions {
   addTodo: (date: string, text: string, repeat: RepeatRule | null) => Promise<string | null>;
   stopRepeat: (todo: TodoItem) => Promise<string | null>;
+  skipOnce: (todo: TodoItem) => Promise<string | null>;
+  makeRepeat: (todo: TodoItem, content: string, repeat: RepeatRule) => Promise<string | null>;
   toggleTodo: (id: string, done: boolean) => Promise<string | null>;
   updateTodo: (id: string, content: string) => Promise<string | null>;
   removeTodo: (id: string) => Promise<string | null>;
@@ -69,6 +71,8 @@ export function DaySection({
           onToggle={todoActions.toggleTodo}
           onUpdate={todoActions.updateTodo}
           onStopRepeat={todoActions.stopRepeat}
+          onSkipOnce={todoActions.skipOnce}
+          onMakeRepeat={todoActions.makeRepeat}
           onRemove={todoActions.removeTodo}
         />
       )}

@@ -11,6 +11,7 @@ const byDateThenCreated = (a: TodoItem, b: TodoItem) =>
 /** 반복 할 일을 미리 만들어 두는 최대 기간 (오늘 기준). 먼 미래 달을 넘겨 봐도 행이 무한정 생기지 않게 한다. */
 const MAX_AHEAD_DAYS = 60;
 
+const SKIP_COLUMN_HINT = '"이 날만 삭제"에 필요한 열이 아직 없어요. Supabase 에서 supabase/schema.sql 을 다시 실행해 주세요.';
 const MISSING_TABLE_HINT = '반복 할일 테이블이 아직 없어요. Supabase 에서 supabase/schema.sql 을 다시 실행해 주세요.';
 
 /**
@@ -57,6 +58,7 @@ export function useRangeTodos(userId: string | null, start: string, end: string)
         for (const day of eachDayOfInterval({ start: parseISO(from), end: parseISO(last) })) {
           if (tpl.repeat_type === 'WEEKLY' && !tpl.weekdays.includes(day.getDay())) continue;
           const date = format(day, 'yyyy-MM-dd');
+          if (tpl.skipped_dates?.includes(date)) continue; // 사용자가 이 날만 지운 날
           if (!have.has(`${tpl.id}|${date}`)) missing.push({ template_id: tpl.id, target_date: date, content: tpl.content });
         }
       }
@@ -196,5 +198,59 @@ export function useRangeTodos(userId: string | null, start: string, end: string)
     return null;
   }, []);
 
-  return { todos, error, addTodo, toggleTodo, updateTodo, removeTodo, stopRepeat };
+  /**
+   * 반복 할일의 이 날 항목만 지운다. 반복은 계속되고, 이 날짜는 반복이 다시 채워 넣지 않도록 건너뛴 날로 기록한다.
+   */
+  const skipOnce = useCallback(async (todo: TodoItem): Promise<string | null> => {
+    if (!todo.template_id) return null;
+    const supabase = createClient();
+    const { data: tpl, error: readError } = await supabase
+      .from('todo_templates')
+      .select('skipped_dates')
+      .eq('id', todo.template_id)
+      .maybeSingle();
+    if (readError) return /skipped_dates|schema cache|does not exist/i.test(readError.message) ? SKIP_COLUMN_HINT : readError.message;
+    const current = ((tpl as { skipped_dates?: string[] } | null)?.skipped_dates ?? []) as string[];
+    if (!current.includes(todo.target_date)) {
+      const { error: updError } = await supabase
+        .from('todo_templates')
+        .update({ skipped_dates: [...current, todo.target_date].sort() })
+        .eq('id', todo.template_id);
+      if (updError) return /skipped_dates|schema cache|does not exist/i.test(updError.message) ? SKIP_COLUMN_HINT : updError.message;
+    }
+    const { error: delError } = await supabase.from('todos').delete().eq('id', todo.id);
+    if (delError) return delError.message;
+    setTodos((prev) => prev.filter((t) => t.id !== todo.id));
+    return null;
+  }, []);
+
+  /**
+   * 이미 있는 한 번짜리 할일을 매일/요일별 반복으로 바꾼다.
+   * 그 할일의 날짜를 반복의 시작일로 삼고, 이 항목을 반복의 첫 항목으로 이어 붙인다(중복으로 또 만들지 않는다).
+   */
+  const makeRepeat = useCallback(async (todo: TodoItem, content: string, repeat: RepeatRule): Promise<string | null> => {
+    const supabase = createClient();
+    const { data: tpl, error: insError } = await supabase
+      .from('todo_templates')
+      .insert({
+        content,
+        repeat_type: repeat.type,
+        weekdays: repeat.type === 'WEEKLY' ? repeat.weekdays : [],
+        start_date: todo.target_date,
+      })
+      .select('id')
+      .single();
+    if (insError) return /todo_templates|schema cache|does not exist/i.test(insError.message) ? MISSING_TABLE_HINT : insError.message;
+    const templateId = (tpl as { id: string }).id;
+    const { error: linkError } = await supabase.from('todos').update({ content, template_id: templateId }).eq('id', todo.id);
+    if (linkError) {
+      await supabase.from('todo_templates').delete().eq('id', templateId); // 연결에 실패하면 만든 반복을 되돌린다
+      return linkError.message;
+    }
+    setTodos((prev) => prev.map((t) => (t.id === todo.id ? { ...t, content, template_id: templateId } : t)));
+    await fetchRef.current(); // 앞으로의 날짜 분을 바로 만들어 보여준다
+    return null;
+  }, []);
+
+  return { todos, error, addTodo, toggleTodo, updateTodo, removeTodo, stopRepeat, skipOnce, makeRepeat };
 }
